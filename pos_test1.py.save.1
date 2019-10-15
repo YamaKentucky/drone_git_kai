@@ -1,0 +1,62 @@
+import time
+from math import *
+import numpy as np
+from dronekit import connect, VehicleMode
+from DronePilot.modules.utils import *
+import GPS_test_function
+import threading
+import serial
+import VL53L0X
+global DD
+global hh
+
+ser = serial.Serial("/dev/ttyAMA0" , 115200)
+tof = VL53L0X.VL53L0X()
+tof.start_ranging(VL53L0X.VL53L0X_LONG_RANGE_MODE)
+
+def compute():
+    global DD
+    global hh
+    
+#    data = None
+#    DD = None
+
+    while True:
+        print("compute")
+       
+        h_distance =  int(tof.get_distance())
+
+        if (h_distance > 0 and h_distance < 2000):
+            hh = h_distance
+
+        print(hh)
+        time.sleep(0.05)
+
+# def compute():
+#     while True:
+#         print("compute")
+#         time.sleep(0.05)
+
+
+
+def control():
+    while True:
+        print("control")
+        time.sleep(0.05)
+
+
+
+
+
+
+if __name__ == "__main__":
+    try:
+        
+        th1 = threading.Thread(target=compute)
+        th1.start()
+        control()
+    
+    except KeyboardInterrupt:
+        print "Keyboard Interrupt, exiting."
+        vehicle.close()
+        exit()
