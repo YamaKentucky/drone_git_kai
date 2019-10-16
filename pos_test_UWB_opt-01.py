@@ -53,57 +53,43 @@ anchor4 = np.array([-3.5, -2.0, 1.820],dtype=float)
 vehicle = connect('/dev/ttyACM0', wait_ready = True, baud = 921600)
 
 
-def uwb():
-    global DD#, DD_b
-    DD = [0,0,0,0]
-    DD_b = [0,0,0,0]
+def uart():
+    global DD, OPT, height, deltaX, deltaY, deltaX_sum, deltaY_sum, time_lap
 
-    while True:
-        result = bus.read_i2c_block_data(adress, 0, 8)
-        time.sleep(0.06)
+    DD = [0, 0, 0, 0]
+    DD_b = [0, 0, 0, 0]
+    data = None
+    OPT = None
+    height = deltaX = deltaY = deltaX_sum = deltaY_sum = time_lap = time_b = 0
 
-        DD_b[0] = result[1] << 8 | result[0]
-        DD_b[1] = result[3] << 8 | result[2]
-        DD_b[2] = result[5] << 8 | result[4]
-        DD_b[3] = result[7] << 8 | result[6]
+    while 1:
+        data = ser.readline()
+        OPT = data.split(",")
+        OPT[8] = OPT[8].strip('\r\n')
+        height  = int(OPT[0]) * 0.001 #m
+        deltaX = -float(OPT[2])  * 0.001  #m/s
+        deltaY = -float(OPT[1])  * 0.001  #m/s
+        deltaX_sum_ar = float(OPT[3])  * 0.001 ##m
+        deltaY_sum_ar = float(OPT[4])  * 0.001 ##m
+        DD_b[0] = int(OPT[5])
+        DD_b[1] = int(OPT[6])
+        DD_b[2] = int(OPT[7])
+        DD_b[3] = int(OPT[8])
 
         for i in range(4):
             if(DD_b[i] < 2000):
                 DD[i] = DD_b[i]
 
-        time.sleep(0.06)
-
-
-def optical():
-    global OPT, height, deltaX, deltaY, deltaX_sum, deltaY_sum, time_lap
-    data = None
-    OPT = None
-    height = deltaX = deltaY = deltaX_sum = deltaY_sum = time_lap = time_b = 0
-    
-    while 1:
-        data = ser.readline()
-        OPT = data.split(",")
-        OPT[4] = OPT[4].strip('\r\n')
-        height  = int(OPT[0]) * 0.001 #m
-        deltaX = -float(OPT[2])  * 0.001  #m/s
-        deltaY = -float(OPT[1])  * 0.001  #m/s
-        deltaX_sum_ar = float(OPT[3])  * 0.001
-        deltaY_sum_ar = float(OPT[4])  * 0.001
         time_lap = time.time() - time_b
         time_b = time.time()
-        deltaX_sum = deltaX_sum + deltaX * 0.042
-        deltaY_sum = deltaY_sum + deltaY * 0.042 
-
-        #time.sleep(0.042)
+        deltaX_sum = deltaX_sum + deltaX * 0.042  ##m
+        deltaY_sum = deltaY_sum + deltaY * 0.042  ##m 
 
 def startup():
     global DD_old
     DD_old = 0
-    th1 = threading.Thread(target = uwb)
+    th1 = threading.Thread(target = uart)
     th1.start()
-
-    th2 = threading.Thread(target = optical)
-    th2.start()
 
     print('SYSTEM ALL GREEN')
     time.sleep(2)
