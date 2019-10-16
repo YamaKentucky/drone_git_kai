@@ -338,12 +338,12 @@ if __name__ == '__main__':
     startup()
     IMU()
     yaw_calibration()
-    #bias_pos = pos_cal()
+    bias_pos = pos_cal()
     #print ("g: {:5.3f}, bias_gyro_x: {:5.3f}, bias_gyro_y: {:5.3f}, bias_gyro_z: {:5.3f}".format(g, bias_gyro_x, bias_gyro_y, bias_gyro_z))
     time.sleep(1)
 
     while True:
-        #pos_estimate(bias_pos[0], bias_pos[1], bias_pos[2])
+        pos_estimate(bias_pos[0], bias_pos[1], bias_pos[2])
         print "Height:{:+5.3f}, deltaX:{:+5.3f}, deltaY:{:+5.3f}, DD[0]:{:5.0f}, DD[1]:{:5.0f}, DD[2]:{:5.0f}, DD[3]:{:5.0f}" .format(height, deltaX, deltaY, DD[0], DD[1], DD[2], DD[3])
         time.sleep(0.042)
 
