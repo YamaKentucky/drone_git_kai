@@ -17,11 +17,6 @@ import navio.util
 ##modules for dronekit
 from dronekit import connect, VehicleMode
 
-
-##for UWB i2c
-adress = 0x04
-bus = smbus.SMBus(1)
-
 ##for opt serial
 ser = serial.Serial("/dev/ttyAMA0" , 115200)
 
