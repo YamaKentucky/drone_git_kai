@@ -44,6 +44,9 @@ anchor2 = np.array([ 3.5,  2.0, 1.820],dtype=float)
 anchor3 = np.array([ 3.5, -2.0, 1.820],dtype=float)
 anchor4 = np.array([-3.5, -2.0, 1.820],dtype=float)
 
+##for logging
+logging = True
+
 ##for position control
 vehicle = connect('/dev/ttyACM0', wait_ready = True, baud = 921600)
 
@@ -87,6 +90,7 @@ def startup():
     th1.start()
 
     print('SYSTEM ALL GREEN')
+    log()
     time.sleep(2)
     DD_old = DD
     print  "DD_old[0]: {:5.0f}, DD_old[1]: {:5.0f}, DD_old[2]: {:5.0f}, DD_old[3]: {:5.0f}".format(DD_old[0], DD_old[1], DD_old[2], DD_old[3])
@@ -174,6 +178,14 @@ def pos_cal():
     print "bias_x:{:+7.3f}, bias_y:{:+7.3f}, bias_z:{:+7.3f}". format(bias_x, bias_y, bias_z)
     return bias_x, bias_y, bias_z
 
+def log():
+    global logger
+    if logging:
+        print ("Logging mode")
+        st = datetime.datetime.fromtimestamp(time.time()).strftime('%m_%d_%H-%M-%S')+".csv"
+        f = open("./logs/position_opt/Logs_opt_test"+st, "w")
+        logger = csv.writer(f)
+        logger.writerow(("timestamp", "x", "y", "z", "deltaX", "deltaY", "DD[0]", "DD[1]", "DD[2]", "DD[3]"))
 
 
 def pos_estimate(bias_x = 0,bias_y = 0,bias_z = 0):
@@ -318,7 +330,13 @@ def pos_estimate(bias_x = 0,bias_y = 0,bias_z = 0):
     
     #print "pos_x:{:+7.3f}, pos_y:{:+7.3f}, pos_z:{:+7.3f}".format(pos_x, pos_y, pos_z)
     print "pos_x:{:+7.3f}, pos_y:{:+7.3f}, pos_z:{:+7.3f}, deltaX_sum: {:+5.3f}, deltaY_sum:{:+5.3f}".format(pos_x, pos_y, pos_z, deltaX_sum, deltaY_sum)
-   
+    row = ("{:6.3f}".format(time.time()), "{:.3f}".format(pos_x), "{:.3f}".format(pos_y)
+            , "{:.3f}".format(pos_z), "{:.3f}".format(deltaX_sum), "{:.3f}".format(deltaY_sum)
+            ,"{:.3f}".format(DD[0]), "{:.3f}".format(DD[1]), "{:.3f}".format(DD[2]), "{:.3f}".format(DD[3]))
+    
+    if logging:
+        logger.writerow(row)
+
     elapsed_time = time.time() - start
    
 
