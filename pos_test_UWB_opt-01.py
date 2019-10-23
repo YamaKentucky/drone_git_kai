@@ -33,16 +33,21 @@ I_9 = np.identity(9)
 acc_noise=0.001
 gyro_noise=0.0003468268
 QQ = np.diag([0,0,0,acc_noise,acc_noise,acc_noise,gyro_noise,gyro_noise,gyro_noise])
-RR = np.diag([0.4,0.4,0.4,0.2,0.2,0.2,0.2,0.01,0.008,0.1,0.1]) #add yaw_pix noise, opt noise
+RR = np.diag([0.4,0.4,0.4,0.2,0.2,0.2,0.2,0.01,0.008,0.001,0.001]) #add yaw_pix noise, opt noise
 
 alfa = np.array([0.8244,0.8244,0.8244],dtype=np.float)
 m9a_low_old = np.array([0, 0, 0], dtype = np.float)
 m9g_low_old = np.array([0, 0, 0], dtype = np.float)
 
-anchor1 = np.array([-3.5,  2.0, 1.820],dtype=float)
-anchor2 = np.array([ 3.5,  2.0, 1.820],dtype=float)
-anchor3 = np.array([ 3.5, -2.0, 1.820],dtype=float)
-anchor4 = np.array([-3.5, -2.0, 1.820],dtype=float)
+# anchor1 = np.array([-3.5,  2.0, 1.820],dtype=float)
+# anchor2 = np.array([ 3.5,  2.0, 1.820],dtype=float)
+# anchor3 = np.array([ 3.5, -2.0, 1.820],dtype=float)
+# anchor4 = np.array([-3.5, -2.0, 1.820],dtype=float)
+
+anchor1 = np.array([-1,   1.5, 0.73],dtype=float)
+anchor2 = np.array([ 1,   1.5, 0.73],dtype=float)
+anchor3 = np.array([ 1,  -1.5, 0.73],dtype=float)
+anchor4 = np.array([-1,  -1.5, 0.73],dtype=float)
 
 ##for logging
 logging = True
@@ -65,8 +70,8 @@ def uart():
         OPT = data.split(",")
         OPT[8] = OPT[8].strip('\r\n')
         height  = int(OPT[0]) * 0.001 #m
-        deltaX = -float(OPT[2])  * 0.001  #m/s
-        deltaY = -float(OPT[1])  * 0.001  #m/s
+        deltaX = -float(OPT[1])  * 0.001  #m/s
+        deltaY = float(OPT[2])  * 0.001  #m/s
         deltaX_sum_ar = float(OPT[3])  * 0.001 ##m
         deltaY_sum_ar = float(OPT[4])  * 0.001 ##m
         DD_b[0] = int(OPT[5])
@@ -324,9 +329,9 @@ def pos_estimate(bias_x = 0,bias_y = 0,bias_z = 0):
     x_new = x_pre + GG.dot(yy-h_pre)
 
     ##estimated Positions
-    pos_x = x_new[:,0][0] #- bias_x
-    pos_y = x_new[:,0][1] #- bias_y
-    pos_z = x_new[:,0][2] #- bias_z
+    pos_x = x_new[:,0][0] - bias_x
+    pos_y = x_new[:,0][1] - bias_y
+    pos_z = x_new[:,0][2] - bias_z
     
     #print "pos_x:{:+7.3f}, pos_y:{:+7.3f}, pos_z:{:+7.3f}".format(pos_x, pos_y, pos_z)
     print "pos_x:{:+7.3f}, pos_y:{:+7.3f}, pos_z:{:+7.3f}, deltaX_sum: {:+5.3f}, deltaY_sum:{:+5.3f}".format(pos_x, pos_y, pos_z, deltaX_sum, deltaY_sum)
