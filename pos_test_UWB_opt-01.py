@@ -33,7 +33,7 @@ I_9 = np.identity(9)
 acc_noise=0.001
 gyro_noise=0.0003468268
 QQ = np.diag([0,0,0,acc_noise,acc_noise,acc_noise,gyro_noise,gyro_noise,gyro_noise])
-RR = np.diag([0.4,0.4,0.4,0.2,0.2,0.2,0.2,0.01,0.008,0.001,0.001]) #add yaw_pix noise, opt noise
+RR = np.diag([0.4,0.4,0.4,0.02,0.02,0.02,0.02,0.01,0.008,0.001,0.001]) #add yaw_pix noise, opt noise
 
 alfa = np.array([0.8244,0.8244,0.8244],dtype=np.float)
 m9a_low_old = np.array([0, 0, 0], dtype = np.float)
