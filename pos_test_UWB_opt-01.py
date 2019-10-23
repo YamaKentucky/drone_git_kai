@@ -33,7 +33,7 @@ I_9 = np.identity(9)
 acc_noise=0.001
 gyro_noise=0.0003468268
 QQ = np.diag([0,0,0,acc_noise,acc_noise,acc_noise,gyro_noise,gyro_noise,gyro_noise])
-RR = np.diag([0.4,0.4,0.4,0.02,0.02,0.02,0.02,0.01,0.008,0.001,0.001]) #add yaw_pix noise, opt noise
+RR = np.diag([0.4,0.4,0.4,0.001,0.001,0.001,0.001,0.01,0.008,1,1]) #add yaw_pix noise, opt noise
 
 alfa = np.array([0.8244,0.8244,0.8244],dtype=np.float)
 m9a_low_old = np.array([0, 0, 0], dtype = np.float)
@@ -57,7 +57,7 @@ vehicle = connect('/dev/ttyACM0', wait_ready = True, baud = 921600)
 
 
 def uart():
-    global DD, OPT, height, deltaX, deltaY, deltaX_sum, deltaY_sum, time_lap
+    global DD, OPT, height, deltaX, deltaY, deltaX_sum, deltaY_sum, time_lap, deltaX_sum_ar, deltaY_sum_ar
 
     DD = [0, 0, 0, 0]
     DD_b = [0, 0, 0, 0]
@@ -190,7 +190,7 @@ def log():
         st = datetime.datetime.fromtimestamp(time.time()).strftime('%m_%d_%H-%M-%S')+".csv"
         f = open("./logs/position_opt/Logs_opt_test"+st, "w")
         logger = csv.writer(f)
-        logger.writerow(("timestamp", "x", "y", "z", "deltaX", "deltaY", "DD[0]", "DD[1]", "DD[2]", "DD[3]"))
+        logger.writerow(("timestamp", "x", "y", "z", "deltaX", "deltaY","deltaX_sum", "deltaY_sum", "v_x", "v_y", "DD[0]", "DD[1]", "DD[2]", "DD[3]"))
 
 
 def pos_estimate(bias_x = 0,bias_y = 0,bias_z = 0):
@@ -335,8 +335,10 @@ def pos_estimate(bias_x = 0,bias_y = 0,bias_z = 0):
     
     #print "pos_x:{:+7.3f}, pos_y:{:+7.3f}, pos_z:{:+7.3f}".format(pos_x, pos_y, pos_z)
     print "pos_x:{:+7.3f}, pos_y:{:+7.3f}, pos_z:{:+7.3f}, deltaX_sum: {:+5.3f}, deltaY_sum:{:+5.3f}".format(pos_x, pos_y, pos_z, deltaX_sum, deltaY_sum)
-    row = ("{:6.3f}".format(time.time()), "{:.3f}".format(pos_x), "{:.3f}".format(pos_y)
-            , "{:.3f}".format(pos_z), "{:.3f}".format(deltaX_sum), "{:.3f}".format(deltaY_sum)
+    row = ("{:6.3f}".format(time.time()), "{:.3f}".format(pos_x), "{:.3f}".format(pos_y) , "{:.3f}".format(pos_z)
+            ,"{:.3f}".format(deltaX), "{:.3f}".format(deltaY)
+            , "{:.3f}".format(deltaX_sum), "{:.3f}".format(deltaY_sum)
+            ,"{:.3f}".format(x_new[:,0][3]), "{:.3f}".format(x_new[:,0][4])
             ,"{:.3f}".format(DD[0]), "{:.3f}".format(DD[1]), "{:.3f}".format(DD[2]), "{:.3f}".format(DD[3]))
     
     if logging:
