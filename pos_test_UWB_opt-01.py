@@ -371,6 +371,6 @@ if __name__ == '__main__':
     while True:
         pos_estimate(bias_pos[0], bias_pos[1], bias_pos[2])
         print "Height:{:+5.3f}, deltaX:{:+5.3f}, deltaY:{:+5.3f}, DD[0]:{:5.0f}, DD[1]:{:5.0f}, DD[2]:{:5.0f}, DD[3]:{:5.0f}" .format(height, deltaX, deltaY, DD[0], DD[1], DD[2], DD[3])
-        #time.sleep(0.042)
+        time.sleep(0.01)
 
     
