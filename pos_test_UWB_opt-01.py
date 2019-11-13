@@ -311,8 +311,8 @@ def pos_estimate(bias_x = 0,bias_y = 0,bias_z = 0):
             dd4 = int(DD[3])*0.01
             DD_old[3] = DD[3]
 
-    v_x = deltaX * c_psi - deltaY * s_psi
-    v_y = deltaX * s_psi + deltaY * c_psi
+    v_xopt = deltaX * c_psi - deltaY * s_psi
+    v_yopt = deltaX * s_psi + deltaY * c_psi
 
     yy = np.array([[-m9a_low[0]],
                 [-m9a_low[1]],
@@ -323,8 +323,8 @@ def pos_estimate(bias_x = 0,bias_y = 0,bias_z = 0):
                 [dd4],
                 [height],
                 [yaw_filter(vehicle.attitude.yaw)],    #yaw_pix
-                [v_x],                              #opt x
-                [v_y]                               #opt y
+                [v_xopt],                              #opt x
+                [v_yopt]                               #opt y
                 ],dtype=np.float)
 
     P_new = (I_9-GG.dot(CC)).dot(P_pre)
