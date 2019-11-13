@@ -22,6 +22,7 @@ ser = serial.Serial("/dev/ttyAMA0" , 115200)
 
 ##for position estimate
 del_t = 0.0166 #sec
+#del_t = 0.042 #sec
 #del_t = 0.05 #sec
 g = 9.81 #m/s^2
 x_old = np.array([0,0,0,0,0,0,0,0,0],dtype=np.float) #m, m/s, rad
@@ -33,7 +34,7 @@ I_9 = np.identity(9)
 acc_noise=0.001
 gyro_noise=0.0003468268
 QQ = np.diag([0,0,0,acc_noise,acc_noise,acc_noise,gyro_noise,gyro_noise,gyro_noise])
-RR = np.diag([0.4,0.4,0.4,0.0001,0.0001,0.0001,0.0001,0.01,0.008,0.005,0.005]) #add yaw_pix noise, opt noise
+RR = np.diag([0.4,0.4,0.4,0.0001,0.0001,0.0001,0.0001,0.01,0.08,0.005,0.005]) #add yaw_pix noise, opt noise
 
 alfa = np.array([0.8244,0.8244,0.8244],dtype=np.float)
 m9a_low_old = np.array([0, 0, 0], dtype = np.float)
@@ -87,7 +88,7 @@ def uart():
         time_b = time.time()
         deltaX_sum = deltaX_sum + deltaX * 0.042  ##m
         deltaY_sum = deltaY_sum + deltaY * 0.042  ##m 
-        #time.sleep(0.042)                         ##delay
+        time.sleep(0.042)                         ##delay
 
 def startup():
     global DD_old
@@ -191,7 +192,7 @@ def log():
         st = datetime.datetime.fromtimestamp(time.time()).strftime('%m_%d_%H-%M-%S')+".csv"
         f = open("./logs/position_opt/Logs_opt_test"+st, "w")
         logger = csv.writer(f)
-        logger.writerow(("timestamp", "x", "y", "z", "deltaX", "deltaY","deltaX_sum", "deltaY_sum", "v_x", "v_y", "DD[0]", "DD[1]", "DD[2]", "DD[3]", "Pitch", "Roll", "Yaw"))
+        logger.writerow(("timestamp", "x", "y", "z", "deltaX", "deltaY","deltaX_sum", "deltaY_sum", "v_x", "v_y", "DD[0]", "DD[1]", "DD[2]", "DD[3]", "Pitch", "Roll", "Yaw", "Yaw_pix"))
 
 
 def pos_estimate(bias_x = 0,bias_y = 0,bias_z = 0):
@@ -342,7 +343,7 @@ def pos_estimate(bias_x = 0,bias_y = 0,bias_z = 0):
             , "{:.3f}".format(deltaX_sum), "{:.3f}".format(deltaY_sum)
             ,"{:.3f}".format(x_new[:,0][3]), "{:.3f}".format(x_new[:,0][4])
             ,"{:.3f}".format(DD[0]), "{:.3f}".format(DD[1]), "{:.3f}".format(DD[2]), "{:.3f}".format(DD[3])
-            ,"{:.3f}".format(x_new[:,0][6]), "{:.3f}".format(x_new[:,0][7]), "{:.3f}".format(x_new[:,0][8])
+            ,"{:.3f}".format(x_new[:,0][6]), "{:.3f}".format(x_new[:,0][7]), "{:.3f}".format(x_new[:,0][8]), "{:.3f}".format(yaw_filter(vehicle.attitude.yaw))
             )
     
     if logging:
@@ -374,6 +375,6 @@ if __name__ == '__main__':
     while True:
         pos_estimate(bias_pos[0], bias_pos[1], bias_pos[2])
         print "Height:{:+5.3f}, deltaX:{:+5.3f}, deltaY:{:+5.3f}, DD[0]:{:5.0f}, DD[1]:{:5.0f}, DD[2]:{:5.0f}, DD[3]:{:5.0f}" .format(height, deltaX, deltaY, DD[0], DD[1], DD[2], DD[3])
-        time.sleep(0.042)
+        #time.sleep(0.042)
 
     
