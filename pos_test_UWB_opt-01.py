@@ -192,7 +192,7 @@ def log():
         st = datetime.datetime.fromtimestamp(time.time()).strftime('%m_%d_%H-%M-%S')+".csv"
         f = open("./logs/position_opt/Logs_opt_test"+st, "w")
         logger = csv.writer(f)
-        logger.writerow(("timestamp", "x", "y", "z", "deltaX", "deltaY","deltaX_sum", "deltaY_sum", "v_x", "v_y", "DD[0]", "DD[1]", "DD[2]", "DD[3]", "Pitch", "Roll", "Yaw", "Yaw_pix", "heading_pix"))
+        logger.writerow(("timestamp", "x", "y", "z", "deltaX", "deltaY","deltaX_sum", "deltaY_sum", "v_x", "v_y", "DD[0]", "DD[1]", "DD[2]", "DD[3]", "dd1", "dd2", "dd3", "dd4", "Pitch", "Roll", "Yaw", "Yaw_pix", "heading_pix"))
 
 
 def pos_estimate(bias_x = 0,bias_y = 0,bias_z = 0):
@@ -297,20 +297,20 @@ def pos_estimate(bias_x = 0,bias_y = 0,bias_z = 0):
 
 
     if abs(int(DD_old[0]) - int(DD[0])) < 120:
-            dd1 = int(DD[0])*0.01   ## mm -> m
-            DD_old[0] = DD[0]
+        dd1 = int(DD[0])*0.01   ## mm -> m
+        DD_old[0] = DD[0]
 
     if abs(int(DD_old[1]) - int(DD[1])) < 120:
-            dd2 = int(DD[1])*0.01
-            DD_old[1] = DD[1]
+        dd2 = int(DD[1])*0.01
+        DD_old[1] = DD[1]
 
     if abs(int(DD_old[2]) - int(DD[2])) < 120:
-            dd3 = int(DD[2])*0.01
-            DD_old[2] = DD[2]
+        dd3 = int(DD[2])*0.01
+        DD_old[2] = DD[2]
         
     if abs(int(DD_old[3]) - int(DD[3])) < 120:
-            dd4 = int(DD[3])*0.01
-            DD_old[3] = DD[3]
+        dd4 = int(DD[3])*0.01
+        DD_old[3] = DD[3]
 
     v_xopt = deltaX * c_psi - deltaY * s_psi
     v_yopt = deltaX * s_psi + deltaY * c_psi
@@ -343,6 +343,7 @@ def pos_estimate(bias_x = 0,bias_y = 0,bias_z = 0):
             , "{:.3f}".format(deltaX_sum), "{:.3f}".format(deltaY_sum)
             ,"{:.3f}".format(x_new[:,0][3]), "{:.3f}".format(x_new[:,0][4])
             ,"{:.3f}".format(DD[0]), "{:.3f}".format(DD[1]), "{:.3f}".format(DD[2]), "{:.3f}".format(DD[3])
+            ,"{:.3f}".format(dd1), "{:.3f}".format(dd2), "{:.3f}".format(dd3), "{:.3f}".format(dd4)
             ,"{:.3f}".format(x_new[:,0][6]), "{:.3f}".format(x_new[:,0][7]), "{:.3f}".format(x_new[:,0][8]), "{:.3f}".format(yaw_filter(vehicle.attitude.yaw)), "{:.3f}".format(vehicle.heading)
             )
     
