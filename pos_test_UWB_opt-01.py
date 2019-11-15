@@ -192,7 +192,7 @@ def log():
         st = datetime.datetime.fromtimestamp(time.time()).strftime('%m_%d_%H-%M-%S')+".csv"
         f = open("./logs/position_opt/Logs_opt_test"+st, "w")
         logger = csv.writer(f)
-        logger.writerow(("timestamp", "x", "y", "z", "deltaX", "deltaY","deltaX_sum", "deltaY_sum", "v_x", "v_y", "DD[0]", "DD[1]", "DD[2]", "DD[3]", "Pitch", "Roll", "Yaw", "Yaw_pix"))
+        logger.writerow(("timestamp", "x", "y", "z", "deltaX", "deltaY","deltaX_sum", "deltaY_sum", "v_x", "v_y", "DD[0]", "DD[1]", "DD[2]", "DD[3]", "Pitch", "Roll", "Yaw", "Yaw_pix", "heading_pix"))
 
 
 def pos_estimate(bias_x = 0,bias_y = 0,bias_z = 0):
@@ -343,7 +343,7 @@ def pos_estimate(bias_x = 0,bias_y = 0,bias_z = 0):
             , "{:.3f}".format(deltaX_sum), "{:.3f}".format(deltaY_sum)
             ,"{:.3f}".format(x_new[:,0][3]), "{:.3f}".format(x_new[:,0][4])
             ,"{:.3f}".format(DD[0]), "{:.3f}".format(DD[1]), "{:.3f}".format(DD[2]), "{:.3f}".format(DD[3])
-            ,"{:.3f}".format(x_new[:,0][6]), "{:.3f}".format(x_new[:,0][7]), "{:.3f}".format(x_new[:,0][8]), "{:.3f}".format(yaw_filter(vehicle.attitude.yaw))
+            ,"{:.3f}".format(x_new[:,0][6]), "{:.3f}".format(x_new[:,0][7]), "{:.3f}".format(x_new[:,0][8]), "{:.3f}".format(yaw_filter(vehicle.attitude.yaw)), "{:.3f}".format(vehicle.heading)
             )
     
     if logging:
