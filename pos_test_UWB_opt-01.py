@@ -21,8 +21,8 @@ from dronekit import connect, VehicleMode
 ser = serial.Serial("/dev/ttyAMA0" , 115200)
 
 ##for position estimate
-del_t = 0.0166 #sec
-#del_t = 0.042 #sec
+#del_t = 0.0166 #sec
+del_t = 0.042 #sec
 #del_t = 0.05 #sec
 g = 9.81 #m/s^2
 x_old = np.array([0,0,0,0,0,0,0,0,0],dtype=np.float) #m, m/s, rad
@@ -88,7 +88,7 @@ def uart():
         time_b = time.time()
         deltaX_sum = deltaX_sum + deltaX * 0.042  ##m
         deltaY_sum = deltaY_sum + deltaY * 0.042  ##m 
-        time.sleep(0.042)                         ##delay
+        #time.sleep(0.042)                         ##delay
 
 def startup():
     global DD_old
