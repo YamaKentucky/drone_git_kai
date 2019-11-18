@@ -91,8 +91,9 @@ def uart():
         #time.sleep(0.042)                         ##delay
 
 def startup():
-    global DD_old
-    DD_old = 0
+    global DD_old, DD_e
+    DD_old = [0, 0, 0, 0]
+    DD_e = [0, 0, 0, 0]
     th1 = threading.Thread(target = uart)
     th1.start()
 
@@ -295,22 +296,25 @@ def pos_estimate(bias_x = 0,bias_y = 0,bias_z = 0):
 
     omega = np.array([(m9g[0]-bias_gyro_x),(m9g[1]-bias_gyro_y),m9g[2]-bias_gyro_z])
 
-    for i in range 4:
-        DD_e[i] = DD[i] 
+    
+    DD_e[0] = DD[0] 
+    DD_e[1] = DD[1] 
+    DD_e[2] = DD[2] 
+    DD_e[3] = DD[3] 
 
-    if abs(int(DD_old[0]) - int(DD_e[0])) < 120:
+    if abs(int(DD_old[0]) - int(DD_e[0])) < 60:
         dd1 = int(DD_e[0])*0.01   ## mm -> m
         DD_old[0] = DD_e[0]
 
-    if abs(int(DD_old[1]) - int(DD_e[1])) < 120:
+    if abs(int(DD_old[1]) - int(DD_e[1])) < 60:
         dd2 = int(DD_e[1])*0.01
         DD_old[1] = DD_e[1]
 
-    if abs(int(DD_old[2]) - int(DD_e[2])) < 120:
+    if abs(int(DD_old[2]) - int(DD_e[2])) < 60:
         dd3 = int(DD_e[2])*0.01
         DD_old[2] = DD_e[2]
         
-    if abs(int(DD_old[3]) - int(DD_e[3])) < 120:
+    if abs(int(DD_old[3]) - int(DD_e[3])) < 60:
         dd4 = int(DD_e[3])*0.01
         DD_old[3] = DD_e[3]
 
