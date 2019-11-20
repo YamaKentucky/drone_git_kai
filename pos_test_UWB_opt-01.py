@@ -35,6 +35,8 @@ acc_noise=0.001
 gyro_noise=0.0003468268
 QQ = np.diag([0,0,0,acc_noise,acc_noise,acc_noise,gyro_noise,gyro_noise,gyro_noise])
 RR = np.diag([0.4,0.4,0.4,0.0001,0.0001,0.0001,0.0001,0.01,0.08,0.005,0.005]) #add yaw_pix noise, opt noise
+#DD_old =[0, 0, 0, 0]
+DD_abs = [0, 0, 0, 0]
 
 alfa = np.array([0.8244,0.8244,0.8244],dtype=np.float)
 m9a_low_old = np.array([0, 0, 0], dtype = np.float)
@@ -91,8 +93,7 @@ def uart():
         #time.sleep(0.042)                         ##delay
 
 def startup():
-    global DD_old, DD_e
-    DD_old = [0, 0, 0, 0]
+    global DD_e, DD_old
     DD_e = [0, 0, 0, 0]
     th1 = threading.Thread(target = uart)
     th1.start()
@@ -100,7 +101,7 @@ def startup():
     print('SYSTEM ALL GREEN')
     log()
     time.sleep(2)
-    DD_old = DD
+    DD_old = [i for  i in DD if i > 0]
     print  "DD_old[0]: {:5.0f}, DD_old[1]: {:5.0f}, DD_old[2]: {:5.0f}, DD_old[3]: {:5.0f}".format(DD_old[0], DD_old[1], DD_old[2], DD_old[3])
     time.sleep(2)
 
@@ -193,7 +194,9 @@ def log():
         st = datetime.datetime.fromtimestamp(time.time()).strftime('%m_%d_%H-%M-%S')+".csv"
         f = open("./logs/position_opt/Logs_opt_test"+st, "w")
         logger = csv.writer(f)
-        logger.writerow(("timestamp", "x", "y", "z", "deltaX", "deltaY","deltaX_sum", "deltaY_sum", "v_x", "v_y", "DD[0]", "DD[1]", "DD[2]", "DD[3]", "dd1", "dd2", "dd3", "dd4", "Pitch", "Roll", "Yaw", "Yaw_pix", "heading_pix"))
+        logger.writerow(("timestamp", "x", "y", "z", "deltaX", "deltaY","deltaX_sum", "deltaY_sum", "v_x", "v_y" 
+                            , "DD[0]", "DD[1]", "DD[2]", "DD[3]","DD_old[0]", "DD_old[1]", "DD_old[2]", "DD_old[3]"
+                            , "dd1", "dd2", "dd3", "dd4", "DD_abs[0]", "DD_abs[1]", "DD_abs[2]", "DD_abs[3]", "Pitch", "Roll", "Yaw", "Yaw_pix", "heading_pix"))
 
 
 def pos_estimate(bias_x = 0,bias_y = 0,bias_z = 0):
@@ -298,39 +301,27 @@ def pos_estimate(bias_x = 0,bias_y = 0,bias_z = 0):
 
     for i in range(4):
         DD_e[i] = DD[i] 
-        DD_abs[i] = abs(int(DD_old[i]) - int(DD_e[i]))
+        DD_abs[i] = abs(DD_e[i] - DD_old[i])
 
-    if DD_abs[0] < 60:
-        dd1 = int(DD_e[0]) * 0.01
-        DD_old[0] = DD_e[0]
-    
-    if DD_abs[1] < 60:
-        dd2 = int(DD_e[1]) * 0.01
-        DD_old[1] = DD_e[1]
+    if DD_abs[0] < 80:
+        dd1 = int(DD_e[0])*0.01   ## mm -> m
+    else:
+        dd1 = DD_old[0] * 0.01
 
-    if DD_abs[2] < 60:
-        dd3 = int(DD_e[2]) * 0.01
-        DD_old[2] = DD_e[2]
+    if DD_abs[1] < 80:
+        dd2 = int(DD_e[1])*0.01
+    else:
+        dd2 = DD_old[1] * 0.01
 
-    if DD_abs[3] < 60:
-        dd4 = int(DD_e[3]) * 0.01
-        DD_old[3] = DD_e[3]
-
-    # if abs(int(DD_old[0]) - int(DD_e[0])) < 60:
-    #     dd1 = int(DD_e[0])*0.01   ## mm -> m
-    #     DD_old[0] = DD_e[0]
-
-    # if abs(int(DD_old[1]) - int(DD_e[1])) < 60:
-    #     dd2 = int(DD_e[1])*0.01
-    #     DD_old[1] = DD_e[1]
-
-    # if abs(int(DD_old[2]) - int(DD_e[2])) < 60:
-    #     dd3 = int(DD_e[2])*0.01
-    #     DD_old[2] = DD_e[2]
+    if DD_abs[2] < 80:
+        dd3 = int(DD_e[2])*0.01
+    else:
+        dd3 = DD_old[2] * 0.01
         
-    # if abs(int(DD_old[3]) - int(DD_e[3])) < 60:
-    #     dd4 = int(DD_e[3])*0.01
-    #     DD_old[3] = DD_e[3]
+    if DD_abs[3] < 80:
+        dd4 = int(DD_e[3])*0.01
+    else:
+        dd4 = DD_old[3] * 0.01
 
     v_xopt = deltaX * c_psi - deltaY * s_psi
     v_yopt = deltaX * s_psi + deltaY * c_psi
@@ -363,6 +354,7 @@ def pos_estimate(bias_x = 0,bias_y = 0,bias_z = 0):
             , "{:.3f}".format(deltaX_sum), "{:.3f}".format(deltaY_sum)
             ,"{:.3f}".format(x_new[:,0][3]), "{:.3f}".format(x_new[:,0][4])
             ,"{:.3f}".format(DD[0]), "{:.3f}".format(DD[1]), "{:.3f}".format(DD[2]), "{:.3f}".format(DD[3])
+            ,"{:.3f}".format(DD_old[0]), "{:.3f}".format(DD_old[1]), "{:.3f}".format(DD_old[2]), "{:.3f}".format(DD_old[3])
             ,"{:.3f}".format(dd1), "{:.3f}".format(dd2), "{:.3f}".format(dd3), "{:.3f}".format(dd4)
             ,"{:.3f}".format(DD_abs[0]), "{:.3f}".format(DD_abs[1]), "{:.3f}".format(DD_abs[2]), "{:.3f}".format(DD_abs[3])
             ,"{:.3f}".format(x_new[:,0][6]), "{:.3f}".format(x_new[:,0][7]), "{:.3f}".format(x_new[:,0][8]), "{:.3f}".format(yaw_filter(vehicle.attitude.yaw)), "{:.3f}".format(vehicle.heading)
@@ -380,6 +372,10 @@ def pos_estimate(bias_x = 0,bias_y = 0,bias_z = 0):
 
     P_old = P_new#[:,0]
     x_old = x_new[:,0]
+
+    for i in range(4):
+        if DD_abs[i] < 80:
+            DD_old[i] = DD_e[i]
 
     return pos_x, pos_y, pos_z, x_new[:,0][3], x_new[:,0][4], x_new[:,0][5], x_new[:,0][6], x_new[:,0][7], x_new[:,0][8]
 
