@@ -173,11 +173,11 @@ def pos_cal():
     pos_x = pos_y = pos_z = 0
 
     for i in range(100):
-        result = pos_estimate()
+        result = pos_estimate(logging_e = False)
         pos_x = pos_x + result[0]
         pos_y = pos_y + result[1]
         pos_z = pos_z + result[2]
-        time.sleep(0.02)
+        #time.sleep(0.02)  ##not need delay
 
     bias_x = pos_x / 100
     bias_y = pos_y / 100
@@ -199,7 +199,7 @@ def log():
                             , "dd1", "dd2", "dd3", "dd4", "DD_abs[0]", "DD_abs[1]", "DD_abs[2]", "DD_abs[3]", "Pitch", "Roll", "Yaw", "Yaw_pix", "heading_pix"))
 
 
-def pos_estimate(bias_x = 0,bias_y = 0,bias_z = 0):
+def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
     global x_old, acc, omega, P_old, m9a_low_old, m9g_low_old, x_new
 
     start = time.time()
@@ -361,7 +361,9 @@ def pos_estimate(bias_x = 0,bias_y = 0,bias_z = 0):
             )
     
     if logging:
-        logger.writerow(row)
+        if logging_e:
+            logger.writerow(row)
+            print("Logging Mode!!")
 
     elapsed_time = time.time() - start
    
