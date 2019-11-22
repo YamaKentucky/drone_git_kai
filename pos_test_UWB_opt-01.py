@@ -34,7 +34,7 @@ I_9 = np.identity(9)
 acc_noise=0.001
 gyro_noise=0.0003468268
 QQ = np.diag([0,0,0,acc_noise,acc_noise,acc_noise,gyro_noise,gyro_noise,gyro_noise])
-RR = np.diag([0.4,0.4,0.4,0.0001,0.0001,0.0001,0.0001,0.01,0.08,0.005,0.005]) #add yaw_pix noise, opt noise
+RR = np.diag([0.4,0.4,0.4,0.0001,0.0001,0.0001,0.0001,0.0001,0.08,0.0006,0.0006]) #add yaw_pix noise, opt noise
 #DD_old =[0, 0, 0, 0]
 DD_abs = [0, 0, 0, 0]
 
@@ -64,6 +64,7 @@ def uart():
 
     DD = [0, 0, 0, 0]
     DD_b = [0, 0, 0, 0]
+    time_b = 0
     data = None
     OPT = None
     height = deltaX = deltaY = deltaX_sum = deltaY_sum = time_lap = time_b = 0
@@ -87,9 +88,11 @@ def uart():
                 DD[i] = DD_b[i]
 
         time_lap = time.time() - time_b
-        time_b = time.time()
         deltaX_sum = deltaX_sum + deltaX * 0.042  ##m
         deltaY_sum = deltaY_sum + deltaY * 0.042  ##m 
+        # deltaX_sum = deltaX_sum + deltaX * time_lap  ##m
+        # deltaY_sum = deltaY_sum + deltaY * time_lap  ##m 
+        time_b = time.time()
         #time.sleep(0.042)                         ##delay
 
 def startup():
@@ -196,7 +199,7 @@ def log():
         logger = csv.writer(f)
         logger.writerow(("timestamp", "x", "y", "z", "deltaX", "deltaY","deltaX_sum", "deltaY_sum", "v_x", "v_y" 
                             , "DD[0]", "DD[1]", "DD[2]", "DD[3]","DD_old[0]", "DD_old[1]", "DD_old[2]", "DD_old[3]"
-                            , "dd1", "dd2", "dd3", "dd4", "DD_abs[0]", "DD_abs[1]", "DD_abs[2]", "DD_abs[3]", "Pitch", "Roll", "Yaw", "Yaw_pix", "heading_pix"))
+                            , "dd1", "dd2", "dd3", "dd4", "DD_abs[0]", "DD_abs[1]", "DD_abs[2]", "DD_abs[3]", "Pitch", "Roll", "Yaw", "Yaw_pix", "heading_pix", "Height"))
 
 
 def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
@@ -358,12 +361,13 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
             ,"{:.3f}".format(dd1), "{:.3f}".format(dd2), "{:.3f}".format(dd3), "{:.3f}".format(dd4)
             ,"{:.3f}".format(DD_abs[0]), "{:.3f}".format(DD_abs[1]), "{:.3f}".format(DD_abs[2]), "{:.3f}".format(DD_abs[3])
             ,"{:.3f}".format(x_new[:,0][6]), "{:.3f}".format(x_new[:,0][7]), "{:.3f}".format(x_new[:,0][8]), "{:.3f}".format(yaw_filter(vehicle.attitude.yaw)), "{:.3f}".format(vehicle.heading)
+            ,"{:.3f}".format(height)
             )
     
     if logging:
         if logging_e:
             logger.writerow(row)
-            print("Logging Mode!!")
+            #print("Logging Mode!!")
 
     elapsed_time = time.time() - start
    
