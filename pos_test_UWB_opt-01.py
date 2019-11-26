@@ -100,12 +100,21 @@ def startup():
     DD_e = [0, 0, 0, 0]
     th1 = threading.Thread(target = uart)
     th1.start()
+    time.sleep(2)
 
+    DD_old = [i for  i in DD if i > 0]
+    while True:
+        if  all([i > 0 for i in DD_old]) > 0:
+            print "All DD_old > 0 "
+            break
+        else:
+            print "Waiting for UWB"
+            DD_old = [i for  i in DD]
+            time.sleep(0.5)
+
+    print  "DD_old[0]: {:5.0f}, DD_old[1]: {:5.0f}, DD_old[2]: {:5.0f}, DD_old[3]: {:5.0f}".format(DD_old[0], DD_old[1], DD_old[2], DD_old[3])
     print('SYSTEM ALL GREEN')
     log()
-    time.sleep(2)
-    DD_old = [i for  i in DD if i > 0]
-    print  "DD_old[0]: {:5.0f}, DD_old[1]: {:5.0f}, DD_old[2]: {:5.0f}, DD_old[3]: {:5.0f}".format(DD_old[0], DD_old[1], DD_old[2], DD_old[3])
     time.sleep(2)
 
 
@@ -191,7 +200,7 @@ def pos_cal():
     return bias_x, bias_y, bias_z
 
 def log():
-    global logger
+    global logger, f
     if logging:
         print ("Logging mode")
         st = datetime.datetime.fromtimestamp(time.time()).strftime('%m_%d_%H-%M-%S')+".csv"
@@ -397,8 +406,21 @@ if __name__ == '__main__':
     time.sleep(1)
 
     while True:
-        pos_estimate(bias_pos[0], bias_pos[1], bias_pos[2])
-        print "Height:{:+5.3f}, deltaX:{:+5.3f}, deltaY:{:+5.3f}, DD[0]:{:5.0f}, DD[1]:{:5.0f}, DD[2]:{:5.0f}, DD[3]:{:5.0f}" .format(height, deltaX, deltaY, DD[0], DD[1], DD[2], DD[3])
-        #time.sleep(0.042)
+        try:
+            pos_estimate(bias_pos[0], bias_pos[1], bias_pos[2])
+            print "Height:{:+5.3f}, deltaX:{:+5.3f}, deltaY:{:+5.3f}, DD[0]:{:5.0f}, DD[1]:{:5.0f}, DD[2]:{:5.0f}, DD[3]:{:5.0f}" .format(height, deltaX, deltaY, DD[0], DD[1], DD[2], DD[3])
+            #time.sleep(0.042)
+
+        except Exception, error:
+            print "error occur!!"
+            print "Error on main:{}".format(str(error))
+            vehicle.close()
+
+        except KeyboardInterrupt:
+            print "Keyboard Interrupt!! Close this file!!"
+            f.close()
+            vehicle.close()
+            exit()
+
 
     
