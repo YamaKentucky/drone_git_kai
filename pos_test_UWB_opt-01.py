@@ -70,30 +70,36 @@ def uart():
     height = deltaX = deltaY = deltaX_sum = deltaY_sum = time_lap = time_b = 0
 
     while 1:
-        data = ser.readline()
-        OPT = data.split(",")
-        OPT[8] = OPT[8].strip('\r\n')
-        height  = int(OPT[0]) * 0.001 #m
-        deltaX = -float(OPT[1])  * 0.001  #m/s
-        deltaY = float(OPT[2])  * 0.001  #m/s
-        deltaX_sum_ar = float(OPT[3])  * 0.001 ##m
-        deltaY_sum_ar = float(OPT[4])  * 0.001 ##m
-        DD_b[0] = int(OPT[5])
-        DD_b[1] = int(OPT[6])
-        DD_b[2] = int(OPT[7])
-        DD_b[3] = int(OPT[8])
+        try:
+            data = ser.readline()
+            OPT = data.split(",")
+            OPT[8] = OPT[8].strip('\r\n')
+            height  = int(OPT[0]) * 0.001 #m
+            deltaX = -float(OPT[1])  * 0.001  #m/s
+            deltaY = float(OPT[2])  * 0.001  #m/s
+            deltaX_sum_ar = float(OPT[3])  * 0.001 ##m
+            deltaY_sum_ar = float(OPT[4])  * 0.001 ##m
+            DD_b[0] = int(OPT[5])
+            DD_b[1] = int(OPT[6])
+            DD_b[2] = int(OPT[7])
+            DD_b[3] = int(OPT[8])
 
-        for i in range(4):
-            if(DD_b[i] < 2000):
-                DD[i] = DD_b[i]
+            for i in range(4):
+                if(DD_b[i] < 2000):
+                    DD[i] = DD_b[i]
 
-        time_lap = time.time() - time_b
-        deltaX_sum = deltaX_sum + deltaX * 0.042  ##m
-        deltaY_sum = deltaY_sum + deltaY * 0.042  ##m 
-        # deltaX_sum = deltaX_sum + deltaX * time_lap  ##m
-        # deltaY_sum = deltaY_sum + deltaY * time_lap  ##m 
-        time_b = time.time()
-        #time.sleep(0.042)                         ##delay
+            time_lap = time.time() - time_b
+            deltaX_sum = deltaX_sum + deltaX * 0.042  ##m
+            deltaY_sum = deltaY_sum + deltaY * 0.042  ##m 
+            # deltaX_sum = deltaX_sum + deltaX * time_lap  ##m
+            # deltaY_sum = deltaY_sum + deltaY * time_lap  ##m 
+            time_b = time.time()
+            #time.sleep(0.042)                         ##delay
+            
+        except KeyboardInterrupt:
+            print "Stop uart by KeyboardInterrupt!!"
+            break
+
 
 def startup():
     global DD_e, DD_old
@@ -420,6 +426,7 @@ if __name__ == '__main__':
             print "Keyboard Interrupt!! Close this file!!"
             f.close()
             vehicle.close()
+            break
             exit()
 
 
