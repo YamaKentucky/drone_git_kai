@@ -35,8 +35,6 @@ acc_noise=0.001
 gyro_noise=0.0003468268
 QQ = np.diag([0,0,0,acc_noise,acc_noise,acc_noise,gyro_noise,gyro_noise,gyro_noise])
 RR = np.diag([0.4,0.4,0.4,0.0001,0.0001,0.0001,0.0001,0.0001,0.08,0.0006,0.0006]) #add yaw_pix noise, opt noise
-#DD_old =[0, 0, 0, 0]
-DD_abs = [0, 0, 0, 0]
 
 alfa = np.array([0.8244,0.8244,0.8244],dtype=np.float)
 m9a_low_old = np.array([0, 0, 0], dtype = np.float)
@@ -102,8 +100,10 @@ def uart():
 
 
 def startup():
-    global DD_e, DD_old
+    global DD_e, DD_old, DD_abs, dd
     DD_e = [0, 0, 0, 0]
+    DD_abs =[0, 0, 0, 0]
+    dd = [0, 0, 0, 0]
     th1 = threading.Thread(target = uart)
     th1.start()
     time.sleep(2)
@@ -321,25 +321,30 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
         DD_e[i] = DD[i] 
         DD_abs[i] = abs(DD_e[i] - DD_old[i])
 
-    if DD_abs[0] < 80:
-        dd1 = int(DD_e[0])*0.01   ## mm -> m
-    else:
-        dd1 = DD_old[0] * 0.01
+        if DD_abs[i] < 80:
+            dd[i] = int(DD_e[i]) * 0.01
+        else:
+            dd[i] = DD_old[i] * 0.01
 
-    if DD_abs[1] < 80:
-        dd2 = int(DD_e[1])*0.01
-    else:
-        dd2 = DD_old[1] * 0.01
+    # if DD_abs[0] < 80:
+    #     dd[0] = int(DD_e[0])*0.01   ## mm -> m
+    # else:
+    #     dd[0] = DD_old[0] * 0.01
 
-    if DD_abs[2] < 80:
-        dd3 = int(DD_e[2])*0.01
-    else:
-        dd3 = DD_old[2] * 0.01
+    # if DD_abs[1] < 80:
+    #     dd[1] = int(DD_e[1])*0.01
+    # else:
+    #     dd[1] = DD_old[1] * 0.01
+
+    # if DD_abs[2] < 80:
+    #     dd[2] = int(DD_e[2])*0.01
+    # else:
+    #     dd[2] = DD_old[2] * 0.01
         
-    if DD_abs[3] < 80:
-        dd4 = int(DD_e[3])*0.01
-    else:
-        dd4 = DD_old[3] * 0.01
+    # if DD_abs[3] < 80:
+    #     dd[3] = int(DD_e[3])*0.01
+    # else:
+    #     dd[3] = DD_old[3] * 0.01
 
     v_xopt = deltaX * c_psi - deltaY * s_psi
     v_yopt = deltaX * s_psi + deltaY * c_psi
@@ -347,10 +352,10 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
     yy = np.array([[-m9a_low[0]],
                 [-m9a_low[1]],
                 [-m9a_low[2]],
-                [dd1],
-                [dd2],
-                [dd3],
-                [dd4],
+                [dd[0]],
+                [dd[1]],
+                [dd[2]],
+                [dd[3]],
                 [height],
                 [yaw_filter(vehicle.attitude.yaw)],    #yaw_pix
                 [v_xopt],                              #opt x
@@ -373,7 +378,7 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
             ,"{:.3f}".format(x_new[:,0][3]), "{:.3f}".format(x_new[:,0][4])
             ,"{:.3f}".format(DD[0]), "{:.3f}".format(DD[1]), "{:.3f}".format(DD[2]), "{:.3f}".format(DD[3])
             ,"{:.3f}".format(DD_old[0]), "{:.3f}".format(DD_old[1]), "{:.3f}".format(DD_old[2]), "{:.3f}".format(DD_old[3])
-            ,"{:.3f}".format(dd1), "{:.3f}".format(dd2), "{:.3f}".format(dd3), "{:.3f}".format(dd4)
+            ,"{:.3f}".format(dd[0]), "{:.3f}".format(dd[1]), "{:.3f}".format(dd[2]), "{:.3f}".format(dd[3])
             ,"{:.3f}".format(DD_abs[0]), "{:.3f}".format(DD_abs[1]), "{:.3f}".format(DD_abs[2]), "{:.3f}".format(DD_abs[3])
             ,"{:.3f}".format(x_new[:,0][6]), "{:.3f}".format(x_new[:,0][7]), "{:.3f}".format(x_new[:,0][8]), "{:.3f}".format(yaw_filter(vehicle.attitude.yaw)), "{:.3f}".format(vehicle.heading)
             ,"{:.3f}".format(height)
