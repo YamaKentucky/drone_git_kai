@@ -15,14 +15,14 @@ import navio.util
 
 ##modules for dronekit
 from dronekit import connect, VehicleMode
+from DronePilot.modules.utils import *
+from DronePilot.modules.pixVehicle import *
 
 ##for opt serial
 ser = serial.Serial("/dev/ttyAMA0" , 115200)
 
 ##for position estimate
 del_t = 0.0166 #sec
-#del_t = 0.042 #sec
-#del_t = 0.05 #sec
 g = 9.81 #m/s^2
 x_old = np.array([0,0,0,0,0,0,0,0,0],dtype=np.float) #m, m/s, rad
 omega = np.array([0,0,0],dtype=np.float) #rad/sec
@@ -54,7 +54,42 @@ logging = True
 
 ##for position control
 vehicle = connect('/dev/ttyACM0', wait_ready = True, baud = 921600)
+update_rate = 0.005 # 200 hz loop cycle
+loop_time = 0.01666 #loop time
+vehicle_weight = 0.64 # Kg
+u0 = 1000 # Zero throttle command
+uh = 1360 # Hover throttle command
+ky = 500 / pi # Yaw controller gain
+desiredPos = {'x':0.0, 'y':0.0, 'z':1.0} ## Set at the beginning (for now...)
+currentPos = {'x':0.0, 'y':0.0, 'z':0.0} ## It will be updated using Estimater
 
+## Initialize RC commands and pitch/roll to be sent to the Pixracer 
+rcCMD = [1500,1500,1000,1500]
+desiredRoll = 1500
+desiredPitch = 1500
+desiredThrottle = 1000
+desiredYaw = 1500
+
+## Controller PID's gains (Gains are considered the same for pitch and roll)
+p_gains = {'kp': 1.85, 'ki':0.181, 'kd':2.0, 'iMax':2, 'filter_bandwidth':50} ##Position Controller gains
+r_gains = {'kp': 1.85, 'ki':0.181, 'kd':2.0, 'iMax':2, 'filter_bandwidth':50} ## Position Controller gains
+h_gains = {'kp': 0.8,  'ki':0.37,  'kd':1.6, 'iMax':2, 'filter_bandwidth':50} ## Height Controller gains
+y_gains = {'kp': 1.0,  'ki':0.0,   'kd':0.0, 'iMax':2, 'filter_bandwidth':50} ## Yaw Controller gains
+
+## PID modules initialization
+rollPID =   PID(r_gains['kp'], r_gains['ki'], r_gains['kd'], r_gains['filter_bandwidth'], 0, 0, loop_time, p_gains['iMax'], -p_gains['iMax'])
+rPIDvalue = 0.0
+pitchPID =  PID(p_gains['kp'], p_gains['ki'], p_gains['kd'], p_gains['filter_bandwidth'], 0, 0, loop_time, p_gains['iMax'], -p_gains['iMax'])
+pPIDvalue = 0.0
+heightPID = PID(h_gains['kp'], h_gains['ki'], h_gains['kd'], h_gains['filter_bandwidth'], 0, 0, loop_time, h_gains['iMax'], -h_gains['iMax'])
+hPIDvalue = 0.0
+yawPID =    PID(y_gains['kp'], y_gains['ki'], y_gains['kd'], y_gains['filter_bandwidth'], 0, 0, loop_time, y_gains['iMax'], -y_gains['iMax'])
+yPIDvalue = 0.0
+
+## Filters initialization
+f_yaw   = low_pass(40,loop_time)
+f_pitch = low_pass(40,loop_time)
+f_roll  = low_pass(40,loop_time)
 
 def uart():
     global DD, OPT, height, deltaX, deltaY, deltaX_sum, deltaY_sum, time_lap, deltaX_sum_ar, deltaY_sum_ar
@@ -124,8 +159,7 @@ def startup():
 
 
 def IMU():
-    global g, bias_gyro_x, bias_gyro_y, bias_gyro_z
-    global imu
+    global g, bias_gyro_x, bias_gyro_y, bias_gyro_z, imu, kt
     g = bias_gyro_x = bias_gyro_y = bias_gyro_z = 0
 
     gyro_x = gyro_y = gyro_z = 0
@@ -158,7 +192,8 @@ def IMU():
     bias_gyro_y = gyro_y / 100
     bias_gyro_z = gyro_z / 100
     g = g / 100
-    
+    kt = vehicle_weight * g / (uh-u0) ##kousinn kt
+
     print("Calibration end!!")
     print ("g: {:5.3f}, bias_gyro_x: {:5.3f}, bias_gyro_y: {:5.3f}, bias_gyro_z: {:5.3f}".format(g, bias_gyro_x, bias_gyro_y, bias_gyro_z))
     time.sleep(1)
@@ -202,6 +237,7 @@ def pos_cal():
 
     print "Position cal finish!!"
     print "bias_x:{:+7.3f}, bias_y:{:+7.3f}, bias_z:{:+7.3f}". format(bias_x, bias_y, bias_z)
+    time.sleep(2)
     return bias_x, bias_y, bias_z
 
 def log():
@@ -369,8 +405,6 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
             #print("Logging Mode!!")
 
     elapsed_time = time.time() - start
-   
-
     if elapsed_time < del_t:
         sleep_time = del_t - elapsed_time
         time.sleep(sleep_time)
@@ -385,6 +419,100 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
     return pos_x, pos_y, pos_z, x_new[:,0][3], x_new[:,0][4], x_new[:,0][5], x_new[:,0][6], x_new[:,0][7], x_new[:,0][8]
 
 
+def control(estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estimate_vz, estimate_Pitch, estimate_Roll, estimate_Yaw):
+    global rcCMD
+    global rollPID, pitchPID, heightPID, yawPID
+    global desiredPos, currentPos
+    global desiredRoll, desiredPitch, desiredThrottle
+    global rPIDvalue, pPIDvalue, yPIDvalue
+    global f_yaw, f_pitch, f_roll
+    global ky
+    global m9a_low_old
+
+    current = time.time()
+    elapsed = 0
+
+    #current position
+    currentPos["x"] = estimate_x 
+    currentPos["y"] = estimate_y 
+    currentPos["z"] = estimate_z 
+    
+    heading = f_yaw.update(estimate_Yaw)
+
+
+    #change desired pos
+    if 1400 < vehicle.channels['7'] < 1600:
+        desiredPos = {'x':0.0, 'y':0.0, 'z':1.0}
+        mode_pos = 0
+
+    if vehicle.channels['7'] > 1800:
+        desiredPos = {'x':1.5, 'y':-1.0, 'z':1.0}
+        mode_pos = 1
+
+    if vehicle.channels['7'] < 1300:
+        desiredPos = {'x':-1.5, 'y':1.0, 'z':1.0}
+        mode_pos = -1
+
+     
+
+    ##PIDcontroller
+    pPIDvalue = pitchPID.update(desiredPos["x"] - currentPos["x"]) #- 0.5 * estimate_vx  
+    rPIDvalue = rollPID.update(desiredPos["y"] - currentPos["y"])  #- 0.5 * estimate_vy
+    hPIDvalue = heightPID.update(desiredPos["z"] - currentPos["z"])
+    yPIDvalue = yawPID.update(0.0 - heading)
+
+    sinYaw = sin(heading)
+    cosYaw = cos(heading)
+
+    ##calcurate,PWM
+    desiredPitch = toPWM(degrees( (pPIDvalue * cosYaw - rPIDvalue * sinYaw) * (1 / g) ), 1)
+    desiredRoll  = toPWM(degrees( (rPIDvalue * cosYaw + pPIDvalue * sinYaw) * (1 / g) ), 1)
+    
+    desiredThrottle = ((hPIDvalue + g) * vehicle_weight) / (cos(f_pitch.update(estimate_Pitch))*cos(f_roll.update(estimate_Roll)))
+    desiredThrottle = (desiredThrottle / kt) + u0
+
+    desiredYaw = 1500 - (yPIDvalue * ky)
+
+    
+    if vehicle.channels['5'] > 1000:
+        ##Limit comands safety  
+        rcCMD[0] = mapping(limit(desiredPitch, 1104, 1924), 1104.0, 1924.0, 1924.0, 1104.0)  #+ trim['Pitch']
+        rcCMD[1] = mapping(limit(desiredRoll,  1104, 1924), 1104.0, 1924.0, 1924.0, 1104.0) #+ trim['Roll']
+        rcCMD[2] = limit(desiredThrottle, 1104, 1924) 
+        rcCMD[3] = limit(desiredYaw,1104,1924) #+ trim['Yaw']
+        #rcCMD[3] = 1500
+        vehicle.channels.overrides = { "2" : rcCMD[0] ,"1" : rcCMD[3] ,"4" : rcCMD[1] } #Yaw:1500
+        #vehicle.channels.overrides = {"3":rcCMD[2] ,"1" : rcCMD[3] } #Yaw:1500 heightControll
+        mode = 1
+
+    else:
+        rcCMD = [1500,1500,1000,1500]
+        vehicle.channels.overrides = {}
+        rollPID.resetIntegrator()
+        pitchPID.resetIntegrator()
+        heightPID.resetIntegrator()
+        yawPID.resetIntegrator()
+        mode = 0
+
+    
+
+    ##print
+    print "Mode: %s| Mode_pos: %s| PitchRC: %d | RollRC: %d | ThrottleRC: %d | YawRC: %d " % (mode ,mode_pos,rcCMD[0], rcCMD[1],rcCMD[2],rcCMD[3])
+
+    # ##Logging
+    # row =   ("{:6.3f}".format(time.time()), \
+    #         #vehicle._pitch, vehicle._roll, vehicle._yaw, \
+    #         "{:.3f}".format(currentPos['x']), "{:.3f}".format(currentPos['y']), "{:.3f}".format(currentPos['z']), 
+    #         "{:.3f}".format(estimate_vx),"{:.3f}".format(estimate_vy),"{:.3f}".format(estimate_vz),
+    #         "{:.3f}".format(estimate_Pitch),"{:.3f}".format(estimate_Roll),"{:.3f}".format(estimate_Yaw),\
+    #         rcCMD[0], rcCMD[1], rcCMD[2], rcCMD[3] ,DD[0],DD[1],DD[2],DD[3],dd1,dd2,dd3,dd4,"{:.3f}".format(yaw_filter(vehicle.attitude.yaw)),mode,mode_pos)
+    
+    # if logging:
+    #     logger.writerow(row)
+
+    ##wait until update_rate
+    while elapsed < update_rate:
+        elapsed = time.time() - current
 
 
 if __name__ == '__main__':
@@ -392,7 +520,6 @@ if __name__ == '__main__':
     IMU()
     yaw_calibration()
     bias_pos = pos_cal()
-    #print ("g: {:5.3f}, bias_gyro_x: {:5.3f}, bias_gyro_y: {:5.3f}, bias_gyro_z: {:5.3f}".format(g, bias_gyro_x, bias_gyro_y, bias_gyro_z))
     time.sleep(1)
 
     while True:
