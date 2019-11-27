@@ -326,26 +326,6 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
         else:
             dd[i] = DD_old[i] * 0.01
 
-    # if DD_abs[0] < 80:
-    #     dd[0] = int(DD_e[0])*0.01   ## mm -> m
-    # else:
-    #     dd[0] = DD_old[0] * 0.01
-
-    # if DD_abs[1] < 80:
-    #     dd[1] = int(DD_e[1])*0.01
-    # else:
-    #     dd[1] = DD_old[1] * 0.01
-
-    # if DD_abs[2] < 80:
-    #     dd[2] = int(DD_e[2])*0.01
-    # else:
-    #     dd[2] = DD_old[2] * 0.01
-        
-    # if DD_abs[3] < 80:
-    #     dd[3] = int(DD_e[3])*0.01
-    # else:
-    #     dd[3] = DD_old[3] * 0.01
-
     v_xopt = deltaX * c_psi - deltaY * s_psi
     v_yopt = deltaX * s_psi + deltaY * c_psi
 
