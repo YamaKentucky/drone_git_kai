@@ -213,8 +213,10 @@ def log():
         f = open("./logs/position_opt/Logs_opt_test"+st, "w")
         logger = csv.writer(f)
         logger.writerow(("timestamp", "x", "y", "z", "deltaX", "deltaY","deltaX_sum", "deltaY_sum", "v_x", "v_y" 
-                            , "DD[0]", "DD[1]", "DD[2]", "DD[3]","DD_old[0]", "DD_old[1]", "DD_old[2]", "DD_old[3]"
-                            , "dd1", "dd2", "dd3", "dd4", "DD_abs[0]", "DD_abs[1]", "DD_abs[2]", "DD_abs[3]", "Pitch", "Roll", "Yaw", "Yaw_pix", "heading_pix", "Height"))
+                            , "DD[0]", "DD[1]", "DD[2]", "DD[3]"
+                            , "dd1", "dd2", "dd3", "dd4"
+                            , "Pitch", "Roll", "Yaw", "Yaw_pix", "heading_pix", "Height"
+                            , "acc[0]", "acc[1]", "acc[2]", "omega[0]", "omega[1]", "omega[2]"))
 
 
 def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
@@ -357,11 +359,11 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
             , "{:.3f}".format(deltaX_sum), "{:.3f}".format(deltaY_sum)
             ,"{:.3f}".format(x_new[:,0][3]), "{:.3f}".format(x_new[:,0][4])
             ,"{:.3f}".format(DD[0]), "{:.3f}".format(DD[1]), "{:.3f}".format(DD[2]), "{:.3f}".format(DD[3])
-            ,"{:.3f}".format(DD_old[0]), "{:.3f}".format(DD_old[1]), "{:.3f}".format(DD_old[2]), "{:.3f}".format(DD_old[3])
             ,"{:.3f}".format(dd[0]), "{:.3f}".format(dd[1]), "{:.3f}".format(dd[2]), "{:.3f}".format(dd[3])
-            ,"{:.3f}".format(DD_abs[0]), "{:.3f}".format(DD_abs[1]), "{:.3f}".format(DD_abs[2]), "{:.3f}".format(DD_abs[3])
             ,"{:.3f}".format(x_new[:,0][6]), "{:.3f}".format(x_new[:,0][7]), "{:.3f}".format(x_new[:,0][8]), "{:.3f}".format(yaw_filter(vehicle.attitude.yaw)), "{:.3f}".format(vehicle.heading)
             ,"{:.3f}".format(height)
+            ,"{:.3f}".format(acc[0]), "{:.3f}".format(acc[1]), "{:.3f}".format(acc[2])
+            ,"{:.3f}".format(omega[0]), "{:.3f}".format(omega[1]), "{:.3f}".format(omega[2])
             )
     
     if logging:
