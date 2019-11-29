@@ -203,6 +203,7 @@ def pos_cal():
 
     print "Position cal finish!!"
     print "bias_x:{:+7.3f}, bias_y:{:+7.3f}, bias_z:{:+7.3f}". format(bias_x, bias_y, bias_z)
+    logger.writerow(("bias_x:{:+7.3f}".format(bias_x), "bias_y:{:.3f}".format(bias_y), "bias_z:{:.3f}". format(bias_z)))
     return bias_x, bias_y, bias_z
 
 def log():
