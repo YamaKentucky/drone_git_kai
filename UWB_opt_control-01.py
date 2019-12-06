@@ -91,6 +91,10 @@ f_yaw   = low_pass(40,loop_time)
 f_pitch = low_pass(40,loop_time)
 f_roll  = low_pass(40,loop_time)
 
+## mode of position control
+mode = 0
+mode_pos = 0
+
 def uart():
     global DD, OPT, height, deltaX, deltaY, deltaX_sum, deltaY_sum, time_lap, deltaX_sum_ar, deltaY_sum_ar
 
@@ -248,8 +252,13 @@ def log():
         f = open("./logs/position_opt/Logs_opt_test"+st, "w")
         logger = csv.writer(f)
         logger.writerow(("timestamp", "x", "y", "z", "deltaX", "deltaY","deltaX_sum", "deltaY_sum", "v_x", "v_y" 
-                            , "DD[0]", "DD[1]", "DD[2]", "DD[3]","DD_old[0]", "DD_old[1]", "DD_old[2]", "DD_old[3]"
-                            , "dd1", "dd2", "dd3", "dd4", "DD_abs[0]", "DD_abs[1]", "DD_abs[2]", "DD_abs[3]", "Pitch", "Roll", "Yaw", "Yaw_pix", "heading_pix", "Height"))
+                            , "DD[0]", "DD[1]", "DD[2]", "DD[3]"
+                            , "dd1", "dd2", "dd3", "dd4"
+                            , "Pitch", "Roll", "Yaw", "Yaw_pix", "heading_pix", "Height"
+                            , "acc[0]", "acc[1]", "acc[2]", "omega[0]", "omega[1]", "omega[2]"
+                            , "Mode", "Mode_pos"
+                            ,"rcCMD[0]", "rcCMD[1]", "rcCMD[2]", "rcCMD[3]"
+                            ))
 
 
 def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
@@ -385,24 +394,25 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
     pos_y = x_new[:,0][1] - bias_y
     pos_z = x_new[:,0][2] - bias_z
     
-    #print "pos_x:{:+7.3f}, pos_y:{:+7.3f}, pos_z:{:+7.3f}".format(pos_x, pos_y, pos_z)
-    print "pos_x:{:+7.3f}, pos_y:{:+7.3f}, pos_z:{:+7.3f}, deltaX_sum: {:+5.3f}, deltaY_sum:{:+5.3f}".format(pos_x, pos_y, pos_z, deltaX_sum, deltaY_sum)
+    print "pos_x:{:+7.3f}, pos_y:{:+7.3f}, pos_z:{:+7.3f}".format(pos_x, pos_y, pos_z)
+
     row = ("{:6.3f}".format(time.time()), "{:.3f}".format(pos_x), "{:.3f}".format(pos_y) , "{:.3f}".format(pos_z)
             ,"{:.3f}".format(deltaX), "{:.3f}".format(deltaY)
-            , "{:.3f}".format(deltaX_sum), "{:.3f}".format(deltaY_sum)
+            ,"{:.3f}".format(deltaX_sum), "{:.3f}".format(deltaY_sum)
             ,"{:.3f}".format(x_new[:,0][3]), "{:.3f}".format(x_new[:,0][4])
             ,"{:.3f}".format(DD[0]), "{:.3f}".format(DD[1]), "{:.3f}".format(DD[2]), "{:.3f}".format(DD[3])
-            ,"{:.3f}".format(DD_old[0]), "{:.3f}".format(DD_old[1]), "{:.3f}".format(DD_old[2]), "{:.3f}".format(DD_old[3])
             ,"{:.3f}".format(dd[0]), "{:.3f}".format(dd[1]), "{:.3f}".format(dd[2]), "{:.3f}".format(dd[3])
-            ,"{:.3f}".format(DD_abs[0]), "{:.3f}".format(DD_abs[1]), "{:.3f}".format(DD_abs[2]), "{:.3f}".format(DD_abs[3])
             ,"{:.3f}".format(x_new[:,0][6]), "{:.3f}".format(x_new[:,0][7]), "{:.3f}".format(x_new[:,0][8]), "{:.3f}".format(yaw_filter(vehicle.attitude.yaw)), "{:.3f}".format(vehicle.heading)
             ,"{:.3f}".format(height)
+            ,"{:.3f}".format(acc[0]), "{:.3f}".format(acc[1]), "{:.3f}".format(acc[2])
+            ,"{:.3f}".format(omega[0]), "{:.3f}".format(omega[1]), "{:.3f}".format(omega[2])
+            ,mode, mode_pos
+            ,rcCMD[0], rcCMD[1], rcCMD[2], rcCMD[3]
             )
     
     if logging:
         if logging_e:
             logger.writerow(row)
-            #print("Logging Mode!!")
 
     elapsed_time = time.time() - start
     if elapsed_time < del_t:
@@ -428,6 +438,7 @@ def control(estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estima
     global f_yaw, f_pitch, f_roll
     global ky
     global m9a_low_old
+    global mode, mode_pos
 
     current = time.time()
     elapsed = 0
@@ -454,7 +465,6 @@ def control(estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estima
         mode_pos = -1
 
      
-
     ##PIDcontroller
     pPIDvalue = pitchPID.update(desiredPos["x"] - currentPos["x"]) #- 0.5 * estimate_vx  
     rPIDvalue = rollPID.update(desiredPos["y"] - currentPos["y"])  #- 0.5 * estimate_vy
@@ -476,10 +486,10 @@ def control(estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estima
     
     if vehicle.channels['5'] > 1000:
         ##Limit comands safety  
-        rcCMD[0] = mapping(limit(desiredPitch, 1104, 1924), 1104.0, 1924.0, 1924.0, 1104.0)  #+ trim['Pitch']
-        rcCMD[1] = mapping(limit(desiredRoll,  1104, 1924), 1104.0, 1924.0, 1924.0, 1104.0) #+ trim['Roll']
+        rcCMD[0] = mapping(limit(desiredPitch, 1104, 1924), 1104.0, 1924.0, 1924.0, 1104.0)  
+        rcCMD[1] = mapping(limit(desiredRoll,  1104, 1924), 1104.0, 1924.0, 1924.0, 1104.0) 
         rcCMD[2] = limit(desiredThrottle, 1104, 1924) 
-        rcCMD[3] = limit(desiredYaw,1104,1924) #+ trim['Yaw']
+        rcCMD[3] = limit(desiredYaw,1104,1924)
         #rcCMD[3] = 1500
         vehicle.channels.overrides = { "2" : rcCMD[0] ,"1" : rcCMD[3] ,"4" : rcCMD[1] } #Yaw:1500
         #vehicle.channels.overrides = {"3":rcCMD[2] ,"1" : rcCMD[3] } #Yaw:1500 heightControll
@@ -497,18 +507,7 @@ def control(estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estima
     
 
     ##print
-    print "Mode: %s| Mode_pos: %s| PitchRC: %d | RollRC: %d | ThrottleRC: %d | YawRC: %d " % (mode ,mode_pos,rcCMD[0], rcCMD[1],rcCMD[2],rcCMD[3])
-
-    # ##Logging
-    # row =   ("{:6.3f}".format(time.time()), \
-    #         #vehicle._pitch, vehicle._roll, vehicle._yaw, \
-    #         "{:.3f}".format(currentPos['x']), "{:.3f}".format(currentPos['y']), "{:.3f}".format(currentPos['z']), 
-    #         "{:.3f}".format(estimate_vx),"{:.3f}".format(estimate_vy),"{:.3f}".format(estimate_vz),
-    #         "{:.3f}".format(estimate_Pitch),"{:.3f}".format(estimate_Roll),"{:.3f}".format(estimate_Yaw),\
-    #         rcCMD[0], rcCMD[1], rcCMD[2], rcCMD[3] ,DD[0],DD[1],DD[2],DD[3],dd1,dd2,dd3,dd4,"{:.3f}".format(yaw_filter(vehicle.attitude.yaw)),mode,mode_pos)
-    
-    # if logging:
-    #     logger.writerow(row)
+    print "Mode: %s| Mode_pos: %s| PitchRC: %d | RollRC: %d | ThrottleRC: %d | YawRC: %d " % (mode, mode_pos, rcCMD[0], rcCMD[1], rcCMD[2], rcCMD[3])
 
     ##wait until update_rate
     while elapsed < update_rate:
@@ -524,9 +523,9 @@ if __name__ == '__main__':
 
     while True:
         try:
-            pos_estimate(bias_pos[0], bias_pos[1], bias_pos[2])
+            estimate = pos_estimate(bias_pos[0], bias_pos[1], bias_pos[2])
+            control(estimate)
             print "Height:{:+5.3f}, deltaX:{:+5.3f}, deltaY:{:+5.3f}, DD[0]:{:5.0f}, DD[1]:{:5.0f}, DD[2]:{:5.0f}, DD[3]:{:5.0f}" .format(height, deltaX, deltaY, DD[0], DD[1], DD[2], DD[3])
-            #time.sleep(0.042)
 
         except Exception, error:
             print "error occur!!"
