@@ -34,6 +34,7 @@ acc_noise=0.001
 gyro_noise=0.0003468268
 QQ = np.diag([0,0,0,acc_noise,acc_noise,acc_noise,gyro_noise,gyro_noise,gyro_noise])
 RR = np.diag([0.4,0.4,0.4,0.0001,0.0001,0.0001,0.0001,0.0001,0.08,0.0006,0.0006]) #add yaw_pix noise, opt noise
+time_old = 0
 
 alfa = np.array([0.8244,0.8244,0.8244],dtype=np.float)
 m9a_low_old = np.array([0, 0, 0], dtype = np.float)
@@ -394,7 +395,8 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
     pos_y = x_new[:,0][1] - bias_y
     pos_z = x_new[:,0][2] - bias_z
     
-    print "pos_x:{:+7.3f}, pos_y:{:+7.3f}, pos_z:{:+7.3f}".format(pos_x, pos_y, pos_z)
+    if time_old - int(time.time()) > 0.5:
+        print "pos_x:{:+7.3f}, pos_y:{:+7.3f}, pos_z:{:+7.3f}".format(pos_x, pos_y, pos_z)
 
     row = ("{:6.3f}".format(time.time()), "{:.3f}".format(pos_x), "{:.3f}".format(pos_y) , "{:.3f}".format(pos_z)
             ,"{:.3f}".format(deltaX), "{:.3f}".format(deltaY)
@@ -439,6 +441,7 @@ def control(estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estima
     global ky
     global m9a_low_old
     global mode, mode_pos
+    global time_old
 
     current = time.time()
     elapsed = 0
@@ -507,7 +510,10 @@ def control(estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estima
     
 
     ##print
-    print "Mode: %s| Mode_pos: %s| PitchRC: %d | RollRC: %d | ThrottleRC: %d | YawRC: %d " % (mode, mode_pos, rcCMD[0], rcCMD[1], rcCMD[2], rcCMD[3])
+    if time_old - int(time.time()) > 0.5:
+        print "Mode: %s| Mode_pos: %s| PitchRC: %d | RollRC: %d | ThrottleRC: %d | YawRC: %d " % (mode, mode_pos, rcCMD[0], rcCMD[1], rcCMD[2], rcCMD[3])
+        time_old = int(time.time())
+
 
     ##wait until update_rate
     while elapsed < update_rate:
@@ -524,7 +530,7 @@ if __name__ == '__main__':
     while True:
         try:
             estimate = pos_estimate(bias_pos[0], bias_pos[1], bias_pos[2])
-            control(estimate)
+            control(estimate[0],estimate[1],estimate[2],estimate[3],estimate[4],estimate[5],estimate[6],estimate[7],estimate[8])
             print "Height:{:+5.3f}, deltaX:{:+5.3f}, deltaY:{:+5.3f}, DD[0]:{:5.0f}, DD[1]:{:5.0f}, DD[2]:{:5.0f}, DD[3]:{:5.0f}" .format(height, deltaX, deltaY, DD[0], DD[1], DD[2], DD[3])
 
         except Exception, error:
