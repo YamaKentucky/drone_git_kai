@@ -34,7 +34,7 @@ acc_noise=0.001
 gyro_noise=0.0003468268
 QQ = np.diag([0,0,0,acc_noise,acc_noise,acc_noise,gyro_noise,gyro_noise,gyro_noise])
 RR = np.diag([0.4,0.4,0.4,0.0001,0.0001,0.0001,0.0001,0.0001,0.08,0.0006,0.0006]) #add yaw_pix noise, opt noise
-time_old = 0
+int(time_old) = 0
 
 alfa = np.array([0.8244,0.8244,0.8244],dtype=np.float)
 m9a_low_old = np.array([0, 0, 0], dtype = np.float)
