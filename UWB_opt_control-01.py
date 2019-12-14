@@ -45,10 +45,10 @@ m9g_low_old = np.array([0, 0, 0], dtype = np.float)
 # anchor3 = np.array([ 3.5, -2.0, 1.820],dtype=float)
 # anchor4 = np.array([-3.5, -2.0, 1.820],dtype=float)
 
-anchor1 = np.array([-1,   1.5, 0.73],dtype=float)
-anchor2 = np.array([ 1,   1.5, 0.73],dtype=float)
-anchor3 = np.array([ 1,  -1.5, 0.73],dtype=float)
-anchor4 = np.array([-1,  -1.5, 0.73],dtype=float)
+anchor1 = np.array([-3,   2.5, 1.242],dtype=float)
+anchor2 = np.array([ 3,   2.5, 1.242],dtype=float)
+anchor3 = np.array([ 3,  -2.5, 1.242],dtype=float)
+anchor4 = np.array([-3,  -2.5, 1.242],dtype=float)
 
 ##for logging
 logging = True
@@ -396,7 +396,7 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
     pos_y = x_new[:,0][1] - bias_y
     pos_z = x_new[:,0][2] - bias_z
     
-    if count % 30 == 0:
+    if count % 10 == 0:
         print "pos_x:{:+7.3f}, pos_y:{:+7.3f}, pos_z:{:+7.3f}".format(pos_x, pos_y, pos_z)
         print "Height:{:+5.3f}, deltaX:{:+5.3f}, deltaY:{:+5.3f}, DD[0]:{:5.0f}, DD[1]:{:5.0f}, DD[2]:{:5.0f}, DD[3]:{:5.0f}" .format(height, deltaX, deltaY, DD[0], DD[1], DD[2], DD[3])
     count = count + 1
@@ -456,18 +456,18 @@ def control(estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estima
     heading = f_yaw.update(estimate_Yaw)
 
 
-    #change desired pos
-    if 1400 < vehicle.channels['7'] < 1600:
-        desiredPos = {'x':0.0, 'y':0.0, 'z':1.0}
-        mode_pos = 0
+    # #change desired pos
+    # if 1400 < vehicle.channels['7'] < 1600:
+    #     desiredPos = {'x':0.0, 'y':0.0, 'z':1.0}
+    #     mode_pos = 0
 
-    if vehicle.channels['7'] > 1800:
-        desiredPos = {'x':1.5, 'y':-1.0, 'z':1.0}
-        mode_pos = 1
+    # if vehicle.channels['7'] > 1800:
+    #     desiredPos = {'x':1.5, 'y':-1.0, 'z':1.0}
+    #     mode_pos = 1
 
-    if vehicle.channels['7'] < 1300:
-        desiredPos = {'x':-1.5, 'y':1.0, 'z':1.0}
-        mode_pos = -1
+    # if vehicle.channels['7'] < 1300:
+    #     desiredPos = {'x':-1.5, 'y':1.0, 'z':1.0}
+    #     mode_pos = -1
 
      
     ##PIDcontroller
@@ -512,7 +512,7 @@ def control(estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estima
     
 
     ##print
-    if count % 30 == 0:
+    if count % 10 == 0:
         print "Mode: %s| Mode_pos: %s| PitchRC: %d | RollRC: %d | ThrottleRC: %d | YawRC: %d " % (mode, mode_pos, rcCMD[0], rcCMD[1], rcCMD[2], rcCMD[3])
 
 
