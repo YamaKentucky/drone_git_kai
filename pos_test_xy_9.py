@@ -246,7 +246,7 @@ def yaw_calibration():
     print(bias_yaw)
     
 
-DD_old = DD
+DD_old = [i for  i in DD]
 
 def pos_estimate(bias_x = 0,bias_y = 0,bias_z = 0):
     global x_old,acc,omega,P_old,m9a_low_old,m9g_low_old,x_new
