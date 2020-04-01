@@ -1,3 +1,5 @@
+##UWB_opt_control-01.pyコードからカルマンフィルタにおける，オプティカルフローの観測項を抜いただけなので基本は同じ．
+## しかし，観測行列が異なるため，分散の値も調整しなければならない．
 ##modules for UWB(serial) opt(serial)
 import time
 import datetime, csv
@@ -64,7 +66,7 @@ ky = 500 / pi # Yaw controller gain
 desiredPos = {'x':0.0, 'y':0.0, 'z':1.0} ## Set at the beginning (for now...)
 currentPos = {'x':0.0, 'y':0.0, 'z':0.0} ## It will be updated using Estimater
 
-## Initialize RC commands and pitch/roll to be sent to the Pixracer 
+## Initialize RC commands and pitch/roll to be sent to the Pixracer
 rcCMD = [1500,1500,1000,1500]
 desiredRoll = 1500
 desiredPitch = 1500
@@ -127,12 +129,12 @@ def uart():
 
             time_lap = time.time() - time_b
             deltaX_sum = deltaX_sum + deltaX * 0.042  ##m
-            deltaY_sum = deltaY_sum + deltaY * 0.042  ##m 
+            deltaY_sum = deltaY_sum + deltaY * 0.042  ##m
             # deltaX_sum = deltaX_sum + deltaX * time_lap  ##m
-            # deltaY_sum = deltaY_sum + deltaY * time_lap  ##m 
+            # deltaY_sum = deltaY_sum + deltaY * time_lap  ##m
             time_b = time.time()
             #time.sleep(0.042)                         ##delay
-            
+
         except KeyboardInterrupt:
             print "Stop uart by KeyboardInterrupt!!"
             break
@@ -209,7 +211,7 @@ def yaw_calibration():
 
     for i in range(100):
         yaw_cal = yaw_cal + vehicle.attitude.yaw
-    
+
     bias_yaw = yaw_cal / 100
     print "yaw_cal: {:3.3f}".format(bias_yaw)
     time.sleep(1)
@@ -221,7 +223,7 @@ def yaw_filter(yaw):
         yaw_sign = yaw_true - 2 * np.pi
 
     else:
-        yaw_sign = yaw_true 
+        yaw_sign = yaw_true
 
     return yaw_sign
 
@@ -252,7 +254,7 @@ def log():
         st = datetime.datetime.fromtimestamp(time.time()).strftime('%m_%d_%H-%M-%S')+".csv"
         f = open("./logs/position_opt/Logs_opt_test"+st, "w")
         logger = csv.writer(f)
-        logger.writerow(("timestamp", "x", "y", "z", "deltaX", "deltaY","deltaX_sum", "deltaY_sum", "v_x", "v_y" 
+        logger.writerow(("timestamp", "x", "y", "z", "deltaX", "deltaY","deltaX_sum", "deltaY_sum", "v_x", "v_y"
                             , "DD[0]", "DD[1]", "DD[2]", "DD[3]"
                             , "dd1", "dd2", "dd3", "dd4"
                             , "Pitch", "Roll", "Yaw", "Yaw_pix", "heading_pix", "Height"
@@ -324,7 +326,7 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
                 [(x_pre[:,0][0]-anchor4[0])/AA4, (x_pre[:,0][1]-anchor4[1])/AA4, (x_pre[:,0][2]-anchor4[2])/AA4, 0,0,0,0,0,0],
                 [0,0,1,0,0,0,0,0,0],
                 [0,0,0,0,0,0,0,0,1],   #yaw jakob
-                [0,0,0,1,0,0,0,0,0],   #v_x jakob 
+                [0,0,0,1,0,0,0,0,0],   #v_x jakob
                 [0,0,0,0,1,0,0,0,0]    #v_y jakob
                 ],dtype=np.float)
 
@@ -364,7 +366,7 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
     omega = np.array([(m9g[0]-bias_gyro_x),(m9g[1]-bias_gyro_y),m9g[2]-bias_gyro_z])
 
     for i in range(4):
-        DD_e[i] = DD[i] 
+        DD_e[i] = DD[i]
         DD_abs[i] = abs(DD_e[i] - DD_old[i])
 
         if DD_abs[i] < 80:
@@ -395,7 +397,7 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
     pos_x = x_new[:,0][0] - bias_x
     pos_y = x_new[:,0][1] - bias_y
     pos_z = x_new[:,0][2] - bias_z
-    
+
     if count % 10 == 0:
         print "pos_x:{:+7.3f}, pos_y:{:+7.3f}, pos_z:{:+7.3f}".format(pos_x, pos_y, pos_z)
         print "Height:{:+5.3f}, deltaX:{:+5.3f}, deltaY:{:+5.3f}, DD[0]:{:5.0f}, DD[1]:{:5.0f}, DD[2]:{:5.0f}, DD[3]:{:5.0f}" .format(height, deltaX, deltaY, DD[0], DD[1], DD[2], DD[3])
@@ -414,7 +416,7 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
             ,mode, mode_pos
             ,rcCMD[0], rcCMD[1], rcCMD[2], rcCMD[3]
             )
-    
+
     if logging:
         if logging_e:
             logger.writerow(row)
@@ -449,10 +451,10 @@ def control(estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estima
     elapsed = 0
 
     #current position
-    currentPos["x"] = estimate_x 
-    currentPos["y"] = estimate_y 
-    currentPos["z"] = estimate_z 
-    
+    currentPos["x"] = estimate_x
+    currentPos["y"] = estimate_y
+    currentPos["z"] = estimate_z
+
     heading = f_yaw.update(estimate_Yaw)
 
 
@@ -469,9 +471,9 @@ def control(estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estima
     #     desiredPos = {'x':-1.5, 'y':1.0, 'z':1.0}
     #     mode_pos = -1
 
-     
+
     ##PIDcontroller
-    pPIDvalue = pitchPID.update(desiredPos["x"] - currentPos["x"]) #- 0.5 * estimate_vx  
+    pPIDvalue = pitchPID.update(desiredPos["x"] - currentPos["x"]) #- 0.5 * estimate_vx
     rPIDvalue = rollPID.update(desiredPos["y"] - currentPos["y"])  #- 0.5 * estimate_vy
     hPIDvalue = heightPID.update(desiredPos["z"] - currentPos["z"])
     yPIDvalue = yawPID.update(0.0 - heading)
@@ -482,18 +484,18 @@ def control(estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estima
     ##calcurate,PWM
     desiredPitch = toPWM(degrees( (pPIDvalue * cosYaw - rPIDvalue * sinYaw) * (1 / g) ), 1)
     desiredRoll  = toPWM(degrees( (rPIDvalue * cosYaw + pPIDvalue * sinYaw) * (1 / g) ), 1)
-    
+
     desiredThrottle = ((hPIDvalue + g) * vehicle_weight) / (cos(f_pitch.update(estimate_Pitch))*cos(f_roll.update(estimate_Roll)))
     desiredThrottle = (desiredThrottle / kt) + u0
 
     desiredYaw = 1500 - (yPIDvalue * ky)
 
-    
+
     if vehicle.channels['5'] > 1000:
-        ##Limit comands safety  
-        rcCMD[0] = mapping(limit(desiredPitch, 1104, 1924), 1104.0, 1924.0, 1924.0, 1104.0)  
-        rcCMD[1] = mapping(limit(desiredRoll,  1104, 1924), 1104.0, 1924.0, 1924.0, 1104.0) 
-        rcCMD[2] = limit(desiredThrottle, 1104, 1924) 
+        ##Limit comands safety
+        rcCMD[0] = mapping(limit(desiredPitch, 1104, 1924), 1104.0, 1924.0, 1924.0, 1104.0)
+        rcCMD[1] = mapping(limit(desiredRoll,  1104, 1924), 1104.0, 1924.0, 1924.0, 1104.0)
+        rcCMD[2] = limit(desiredThrottle, 1104, 1924)
         rcCMD[3] = limit(desiredYaw,1104,1924)
         #rcCMD[3] = 1500
         vehicle.channels.overrides = { "2" : rcCMD[0] ,"1" : rcCMD[3] ,"4" : rcCMD[1] } #Yaw:1500
@@ -509,7 +511,7 @@ def control(estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estima
         yawPID.resetIntegrator()
         mode = 0
 
-    
+
 
     ##print
     if count % 10 == 0:
@@ -544,6 +546,3 @@ if __name__ == '__main__':
             vehicle.close()
             break
             exit()
-
-
-    
