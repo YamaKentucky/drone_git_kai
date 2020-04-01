@@ -33,7 +33,7 @@ I_9 = np.identity(9)
 acc_noise=0.001
 gyro_noise=0.0003468268
 QQ = np.diag([0,0,0,acc_noise,acc_noise,acc_noise,gyro_noise,gyro_noise,gyro_noise])
-RR = np.diag([0.4,0.4,0.4,0.0001,0.0001,0.0001,0.0001,0.0001,0.08]) #add yaw_pix noise
+RR = np.diag([0.4,0.4,0.4,0.0001,0.0001,0.0001,0.0001,0.0001,0.08,0.0006,0.0006]) #add yaw_pix noise, opt noise
 count = 0
 
 alfa = np.array([0.8244,0.8244,0.8244],dtype=np.float)
@@ -97,14 +97,14 @@ mode = 0
 mode_pos = 0
 
 def uart():
-    global DD, OPT, height, deltaX, deltaY, v_xopt_sum, v_yopt_sum, time_lap, deltaX_sum_ar, deltaY_sum_ar
+    global DD, OPT, height, deltaX, deltaY, deltaX_sum, deltaY_sum, time_lap, deltaX_sum_ar, deltaY_sum_ar
 
     DD = [0, 0, 0, 0]
     DD_b = [0, 0, 0, 0]
     time_b = 0
     data = None
     OPT = None
-    height = deltaX = deltaY = v_xopt_sum = v_yopt_sum = time_lap = time_b = 0
+    height = deltaX = deltaY = deltaX_sum = deltaY_sum = time_lap = time_b = 0
 
     while 1:
         try:
@@ -126,9 +126,12 @@ def uart():
                     DD[i] = DD_b[i]
 
             time_lap = time.time() - time_b
-            v_xopt_sum = v_xopt_sum + v_xopt * 0.042  ##m
-            v_yopt_sum = v_yopt_sum + v_yopt * 0.042  ##m 
+            deltaX_sum = deltaX_sum + deltaX * 0.042  ##m
+            deltaY_sum = deltaY_sum + deltaY * 0.042  ##m 
+            # deltaX_sum = deltaX_sum + deltaX * time_lap  ##m
+            # deltaY_sum = deltaY_sum + deltaY * time_lap  ##m 
             time_b = time.time()
+            #time.sleep(0.042)                         ##delay
             
         except KeyboardInterrupt:
             print "Stop uart by KeyboardInterrupt!!"
@@ -249,7 +252,7 @@ def log():
         st = datetime.datetime.fromtimestamp(time.time()).strftime('%m_%d_%H-%M-%S')+".csv"
         f = open("./logs/position_opt/Logs_opt_test"+st, "w")
         logger = csv.writer(f)
-        logger.writerow(("timestamp", "x", "y", "z", "v_xopt", "v_yopt","v_xopt_sum", "v_yopt_sum", "v_x", "v_y" 
+        logger.writerow(("timestamp", "x", "y", "z", "deltaX", "deltaY","deltaX_sum", "deltaY_sum", "v_x", "v_y" 
                             , "DD[0]", "DD[1]", "DD[2]", "DD[3]"
                             , "dd1", "dd2", "dd3", "dd4"
                             , "Pitch", "Roll", "Yaw", "Yaw_pix", "heading_pix", "Height"
@@ -260,7 +263,7 @@ def log():
 
 
 def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
-    global x_old, acc, omega, P_old, m9a_low_old, m9g_low_old, x_new, v_xopt, v_yopt
+    global x_old, acc, omega, P_old, m9a_low_old, m9g_low_old, x_new
     global count
 
     start = time.time()
@@ -320,7 +323,9 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
                 [(x_pre[:,0][0]-anchor3[0])/AA3, (x_pre[:,0][1]-anchor3[1])/AA3, (x_pre[:,0][2]-anchor3[2])/AA3, 0,0,0,0,0,0],
                 [(x_pre[:,0][0]-anchor4[0])/AA4, (x_pre[:,0][1]-anchor4[1])/AA4, (x_pre[:,0][2]-anchor4[2])/AA4, 0,0,0,0,0,0],
                 [0,0,1,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,1]   #yaw jakob
+                [0,0,0,0,0,0,0,0,1],   #yaw jakob
+                [0,0,0,1,0,0,0,0,0],   #v_x jakob 
+                [0,0,0,0,1,0,0,0,0]    #v_y jakob
                 ],dtype=np.float)
 
 #########################################################################################
@@ -337,7 +342,9 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
                     [np.sqrt(pow(x_pre[:,0][0]-anchor3[0] ,2) + pow(x_pre[:,0][1]-anchor3[1] ,2) + pow(x_pre[:,0][2]-anchor3[2] ,2))],
                     [np.sqrt(pow(x_pre[:,0][0]-anchor4[0] ,2) + pow(x_pre[:,0][1]-anchor4[1] ,2) + pow(x_pre[:,0][2]-anchor4[2] ,2))],
                     [x_pre[:,0][2]],
-                    [x_pre[:,0][8]]     #yaw
+                    [x_pre[:,0][8]],     #yaw
+                    [x_pre[:,0][3]],     #v_x
+                    [x_pre[:,0][4]]      #v_y
                     ], dtype=np.float)
 
     m9a, m9g, m9m = imu.getMotion9() #measure
@@ -376,7 +383,9 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
                 [dd[2]],
                 [dd[3]],
                 [height],
-                [yaw_filter(vehicle.attitude.yaw)]    #yaw_pix
+                [yaw_filter(vehicle.attitude.yaw)],    #yaw_pix
+                [v_xopt],                              #opt x
+                [v_yopt]                               #opt y
                 ],dtype=np.float)
 
     P_new = (I_9-GG.dot(CC)).dot(P_pre)
@@ -393,8 +402,8 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
     count = count + 1
 
     row = ("{:6.3f}".format(time.time()), "{:.3f}".format(pos_x), "{:.3f}".format(pos_y) , "{:.3f}".format(pos_z)
-            ,"{:.3f}".format(v_xopt), "{:.3f}".format(v_yopt)
-            ,"{:.3f}".format(v_xopt_sum), "{:.3f}".format(v_yopt_sum)
+            ,"{:.3f}".format(deltaX), "{:.3f}".format(deltaY)
+            ,"{:.3f}".format(deltaX_sum), "{:.3f}".format(deltaY_sum)
             ,"{:.3f}".format(x_new[:,0][3]), "{:.3f}".format(x_new[:,0][4])
             ,"{:.3f}".format(DD[0]), "{:.3f}".format(DD[1]), "{:.3f}".format(DD[2]), "{:.3f}".format(DD[3])
             ,"{:.3f}".format(dd[0]), "{:.3f}".format(dd[1]), "{:.3f}".format(dd[2]), "{:.3f}".format(dd[3])
