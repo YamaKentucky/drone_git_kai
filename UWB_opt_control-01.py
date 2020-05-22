@@ -72,7 +72,8 @@ desiredThrottle = 1000
 desiredYaw = 1500
 
 ## Controller PID's gains (Gains are considered the same for pitch and roll)
-p_gains = {'kp': 1.85, 'ki':0.181, 'kd':2.0, 'iMax':2, 'filter_bandwidth':50} ##Position Controller gains
+## 主にピッチとロールのゲインをいじれば位置制御の応答性が変わる．##高さゲインの調整は慎重にする
+p_gains = {'kp': 1.85, 'ki':0.181, 'kd':2.0, 'iMax':2, 'filter_bandwidth':50} ## Position Controller gains
 r_gains = {'kp': 1.85, 'ki':0.181, 'kd':2.0, 'iMax':2, 'filter_bandwidth':50} ## Position Controller gains
 h_gains = {'kp': 0.8,  'ki':0.37,  'kd':1.6, 'iMax':2, 'filter_bandwidth':50} ## Height Controller gains
 y_gains = {'kp': 1.0,  'ki':0.0,   'kd':0.0, 'iMax':2, 'filter_bandwidth':50} ## Yaw Controller gains
@@ -144,7 +145,7 @@ def startup():##DD_oldの初期化やスレッド化したuart()関数を動か�
     th1.start()
     time.sleep(2)
 
-    DD_old = [i for  i in DD if i > 0]
+    DD_old = [i for i in DD if i > 0]
     while True:
         if  all([i > 0 for i in DD_old]) > 0:
             print "All DD_old > 0 "
@@ -187,7 +188,7 @@ def IMU():##ジャイロセンサのキャリブレーションをする．
         gyro_y = gyro_y + m9g[1]
         gyro_z = gyro_z + m9g[2]
 
-        g = g + np.sqrt(pow(m9a[0], 2) + pow(m9a[1], 2) + pow(m9a[2], 2))
+        g = g + np.sqrt(pow(m9a[0], 2) + pow(m9a[1], 2) + pow(m9a[2], 2))##g+√(x^2+y^2+z^2)
         time.sleep(0.03)
 
     bias_gyro_x = gyro_x / 100
