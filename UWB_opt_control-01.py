@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+
 ##modules for UWB(serial) opt(serial)
 import time
 import datetime, csv
@@ -97,7 +100,8 @@ f_roll  = low_pass(40,loop_time)
 mode = 0
 mode_pos = 0
 
-def uart():##TeensyLCからUart通信にて送られてきたデータをそれぞれ変数に格納する
+##TeensyLCからUart通信にて送られてきたデータをそれぞれ変数に格納する
+def uart():
     global DD, OPT, height, deltaX, deltaY, v_xopt_sum, v_yopt_sum, time_lap, deltaX_sum_ar, deltaY_sum_ar
 
     DD = [0, 0, 0, 0]
@@ -135,8 +139,8 @@ def uart():##TeensyLCからUart通信にて送られてきたデータをそれ�
             print "Stop uart by KeyboardInterrupt!!"
             break
 
-
-def startup():##DD_oldの初期化やスレッド化したuart()関数を動かすなどする．
+##DD_oldの初期化やスレッド化したuart()関数を動かすなどする．
+def startup():
     global DD_e, DD_old, DD_abs, dd
     DD_e = [0, 0, 0, 0]
     DD_abs =[0, 0, 0, 0]
@@ -160,8 +164,8 @@ def startup():##DD_oldの初期化やスレッド化したuart()関数を動か�
     log()
     time.sleep(2)
 
-
-def IMU():##ジャイロセンサのキャリブレーションをする．
+##ジャイロセンサのキャリブレーションをする．
+def IMU():
     global g, bias_gyro_x, bias_gyro_y, bias_gyro_z, imu, kt
     g = bias_gyro_x = bias_gyro_y = bias_gyro_z = 0
 
@@ -201,7 +205,8 @@ def IMU():##ジャイロセンサのキャリブレーションをする．
     print ("g: {:5.3f}, bias_gyro_x: {:5.3f}, bias_gyro_y: {:5.3f}, bias_gyro_z: {:5.3f}".format(g, bias_gyro_x, bias_gyro_y, bias_gyro_z))
     time.sleep(1)
 
-def yaw_calibration():##ヨー角の初期化を行う．初めにクアッドロータを置いた向きを0度として扱う
+##ヨー角の初期化を行う．初めにクアッドロータを置いた向きを0度として扱う
+def yaw_calibration():
     global bias_yaw
     bias_yaw = yaw_cal = 0
 
@@ -212,7 +217,8 @@ def yaw_calibration():##ヨー角の初期化を行う．初めにクアッド�
     print "yaw_cal: {:3.3f}".format(bias_yaw)
     time.sleep(1)
 
-def yaw_filter(yaw):##推定されたヨー角の補正を行う
+##推定されたヨー角の補正を行う
+def yaw_filter(yaw):
     yaw_true = - yaw + bias_yaw
 
     if  np.pi <= yaw_true  <= 2 * np.pi:
@@ -223,7 +229,8 @@ def yaw_filter(yaw):##推定されたヨー角の補正を行う
 
     return yaw_sign
 
-def pos_cal():##位置の初期化を行う．初めにクアッドロータを置いた地点を位置(x, y)=(0, 0)として扱う．
+##位置の初期化を行う．初めにクアッドロータを置いた地点を位置(x, y)=(0, 0)として扱う．
+def pos_cal():
     bias_x = bias_gyro_y = bias_gyro_z = 0
     pos_x = pos_y = pos_z = 0
 
@@ -260,8 +267,9 @@ def log():
                             ))
 
 
-def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):##期化した初期位置を引数にクアッドロータの位置の推定を行う．
-                                                                       ##カルマンフィルタを用いて推定しており，そこそこ複雑なので，詳細は私の修論や赤堀さんの修論を参考に．
+def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
+##期化した初期位置を引数にクアッドロータの位置の推定を行う．
+##カルマンフィルタを用いて推定しており，そこそこ複雑なので，詳細は私の修論や赤堀さんの修論を参考に．
     global x_old, acc, omega, P_old, m9a_low_old, m9g_low_old, x_new, v_xopt, v_yopt
     global count
 
