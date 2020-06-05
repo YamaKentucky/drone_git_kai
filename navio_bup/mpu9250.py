@@ -245,17 +245,13 @@ class MPU9250:
         self.accelerometer_data = [0.0, 0.0, 0.0]
         self.magnetometer_data = [0.0, 0.0, 0.0]
 
-    def bus_open(self):
-        self.bus.open(self.spi_bus_number, self.spi_dev_number)
-        self.bus.max_speed_hz = 10000000
-
 # -----------------------------------------------------------------------------------------------
 #                                     REGISTER READ & WRITE
 # usage: use these methods to read and write MPU9250 registers over SPI
 # -----------------------------------------------------------------------------------------------
 
     def WriteReg(self, reg_address, data):
-        self.bus_open()
+        self.bus.open(self.spi_bus_number, self.spi_dev_number)
         tx = [reg_address, data]
         rx = self.bus.xfer2(tx)
         self.bus.close()
@@ -264,7 +260,7 @@ class MPU9250:
 # -----------------------------------------------------------------------------------------------
 
     def ReadReg(self, reg_address):
-        self.bus_open()
+        self.bus.open(self.spi_bus_number, self.spi_dev_number)
         tx = [reg_address | self.__READ_FLAG, 0x00]
         rx = self.bus.xfer2(tx)
         self.bus.close()
@@ -273,7 +269,7 @@ class MPU9250:
 # -----------------------------------------------------------------------------------------------
 
     def ReadRegs(self, reg_address, length):
-        self.bus_open()
+        self.bus.open(self.spi_bus_number, self.spi_dev_number)
         tx = [0] * (length + 1)
         tx[0] = reg_address | self.__READ_FLAG
 
@@ -470,6 +466,27 @@ class MPU9250:
         #temp = response[0]*256.0 + response[1]
         temp = self.byte_to_float(response)
         self.temperature = (temp/340.0)+36.53
+
+# -----------------------------------------------------------------------------------------------
+#                                 READ ACCELEROMETER CALIBRATION
+# usage: call this function to read accelerometer data. Axis represents selected axis:
+# 0 -> X axis
+# 1 -> Y axis
+# 2 -> Z axis
+# returns Factory Trim value
+# -----------------------------------------------------------------------------------------------
+
+    def calib_acc(self):
+        temp_scale = self.ReadReg(self.__MPUREG_ACCEL_CONFIG)
+        self.set_acc_scale(self.__BITS_FS_8G)
+
+        response = self.ReadRegs(self.__MPUREG_SELF_TEST_X, 4)
+
+        self.calib_data[0] = ((response[0] & 11100000) >> 3) | ((response[3] & 00110000) >> 4)
+        self.calib_data[1] = ((response[1] & 11100000) >> 3) | ((response[3] & 00001100) >> 2)
+        self.calib_data[2] = ((response[2] & 11100000) >> 3) | ((response[3] & 00000011))
+
+        self.set_acc_scale(temp_scale)
 
 # -----------------------------------------------------------------------------------------------
 

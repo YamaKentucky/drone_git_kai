@@ -1,0 +1,1 @@
+timestamp,x,y,z,v_xopt,v_yopt,v_xopt_sum,v_yopt_sum,v_x,v_y,DD[0],DD[1],DD[2],DD[3],dd1,dd2,dd3,dd4,Pitch,Roll,Yaw,Yaw_pix,heading_pix,Height,acc[0],acc[1],acc[2],omega[0],omega[1],omega[2],Mode,Mode_pos,rcCMD[0],rcCMD[1],rcCMD[2],rcCMD[3]

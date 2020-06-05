@@ -1,5 +1,4 @@
-##UWB_opt_control-01.pyコードからカルマンフィルタにおける，オプティカルフローの観測項を抜いただけなので基本は同じ．
-## しかし，観測行列が異なるため，分散の値も調整しなければならない．
+
 ##modules for UWB(serial) opt(serial)
 import time
 import datetime, csv
