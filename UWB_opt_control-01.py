@@ -134,7 +134,7 @@ def uart():
             v_xopt_sum = v_xopt_sum + v_xopt * 0.042  ##m
             v_yopt_sum = v_yopt_sum + v_yopt * 0.042  ##m
             time_b = time.time()
-
+            
         except KeyboardInterrupt:
             print "Stop uart by KeyboardInterrupt!!"
             break

@@ -12,4 +12,4 @@ while 1:
     #d3 = int(DD[2])*0.01
     #d4 = int(DD[3])*0.01
     print data#d1, d2, d3, d4
-    time.sleep(0.05)
+    time.sleep(0.01)
