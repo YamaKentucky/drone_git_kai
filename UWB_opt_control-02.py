@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ##modules for UWB(serial) opt(serial)
 import time
 import datetime, csv
@@ -32,7 +33,7 @@ P_old = np.identity(9)*gamma
 I_9 = np.identity(9)
 acc_noise=0.001
 gyro_noise=0.0003468268
-QQ = np.diag([0,0,0,acc_noise,acc_noise,acc_noise,gyro_noise,gyro_noise,gyro_noise])
+QQ = np.diag([0,0,0,acc_noise,acc_noise,acc_noise,gyro_noise,gyro_noise,gyro_noise])##加速度センサと地磁気センサからのノイズ w
 RR = np.diag([0.4,0.4,0.4,0.0001,0.0001,0.0001,0.0001,0.0001,0.08,0.0006,0.0006]) #add yaw_pix noise, opt noise
 count = 0
 
@@ -96,6 +97,7 @@ f_roll  = low_pass(40,loop_time)
 mode = 0
 mode_pos = 0
 
+##uart()関数にてTeensyLCからUart通信にて送られてきたデータをそれぞれ変数に格納する
 def uart():
     global DD, OPT, height, deltaX, deltaY, v_xopt_sum, v_yopt_sum, time_lap, deltaX_sum_ar, deltaY_sum_ar
 
@@ -138,7 +140,7 @@ def uart():
             print "Stop uart by KeyboardInterrupt!!"
             break
 
-
+##DD_oldの初期化やスレッド化したuart()関数を動かすなどする．
 def startup():
     global DD_e, DD_old, DD_abs, dd
     DD_e = [0, 0, 0, 0]
@@ -215,6 +217,7 @@ def yaw_calibration():
     print "yaw_cal: {:3.3f}".format(bias_yaw)
     time.sleep(1)
 
+##yaw_filter()では推定されたヨー角の補正を行う．
 def yaw_filter(yaw):
     yaw_true = - yaw + bias_yaw
 
@@ -225,7 +228,7 @@ def yaw_filter(yaw):
         yaw_sign = yaw_true 
 
     return yaw_sign
-
+##pos_cal()にて位置の初期化を行う．初めにクアッドロータを置いた地点を位置(x, y)=(0, 0)として扱う．
 def pos_cal():
     bias_x = bias_gyro_y = bias_gyro_z = 0
     pos_x = pos_y = pos_z = 0
@@ -262,7 +265,7 @@ def log():
                             ,"rcCMD[0]", "rcCMD[1]", "rcCMD[2]", "rcCMD[3]"
                             ))
 
-
+##初期化した初期位置を引数にクアッドロータの位置の推定を行う．カルマンフィルタを用いて推定している
 def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
     global x_old, acc, omega, P_old, m9a_low_old, m9g_low_old, x_new, v_xopt, v_yopt
     global count
@@ -278,10 +281,10 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
     c_psi = np.cos(x_old[8])
 
 
-    x_pre = np.array([[x_old[0]+x_old[3]*del_t],
-                    [x_old[1]+x_old[4]*del_t],
-                    [x_old[2]+x_old[5]*del_t],
-                    [x_old[3]+c_the*c_psi*acc[0]*del_t+(s_the*c_psi*s_phi-s_psi*c_phi)*acc[1]*del_t+(s_the*c_psi*c_phi+s_psi*s_phi)*acc[2]*del_t],
+    x_pre = np.array([[x_old[0]+x_old[3]*del_t],                                                                                                    ##|x_0+x_3*dt|θ  φ  ψ 
+                    [x_old[1]+x_old[4]*del_t],                                                                                                      ##|x_1+x_4*dt|
+                    [x_old[2]+x_old[5]*del_t],                                                                                                      ##|x_2+x_5*dt|
+                    [x_old[3]+c_the*c_psi*acc[0]*del_t+(s_the*c_psi*s_phi-s_psi*c_phi)*acc[1]*del_t+(s_the*c_psi*c_phi+s_psi*s_phi)*acc[2]*del_t],  ##|x_3+cosθcosψa_0*dt+(sinθcosψsinφ-sinψcosφ)a_1*dt+(sinθcosψcosφ+sinψsinφ)a_2*dt|
                     [x_old[4]+c_the*s_psi*acc[0]*del_t+(s_the*s_psi*s_phi+c_psi*c_phi)*acc[1]*del_t+(s_the*s_psi*c_phi-c_psi*s_phi)*acc[2]*del_t],
                     [x_old[5]-s_the*acc[0]*del_t+c_the*s_phi*acc[1]*del_t+c_the*c_phi*acc[2]*del_t+g*del_t],
                     [x_old[6] + omega[0]*del_t+s_phi*t_the*omega[1]*del_t + c_phi*t_the*omega[2]*del_t],
@@ -300,10 +303,18 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
                 [0,0,0,0,1,0, (s_the*s_psi*c_phi-c_psi*s_phi)*acc[1]*del_t + (-s_the*s_psi*s_phi-c_psi*c_phi)*acc[2]*del_t,
                                 -s_the*s_psi*acc[0]*del_t + c_the*s_psi*s_phi*acc[1]*del_t + c_the*s_psi*s_phi*acc[2]*del_t,
                                 c_the*c_psi*acc[0]*del_t + (s_the*s_psi*s_phi-s_psi*c_phi)*acc[1]*del_t + (s_the*c_psi*c_phi+s_psi*s_phi)*acc[2]*del_t],
-                [0,0,0,0,0,1, c_the*c_phi*acc[1]*del_t - c_the*s_phi*acc[2]*del_t, -c_the*acc[0]*del_t - s_the*s_phi*acc[1] - s_the*c_phi*acc[2]*del_t,0],
-                [0,0,0,0,0,0, 1+c_phi*t_the*omega[1]*del_t-s_phi*t_the*omega[2]*del_t, s_phi/(c_the*c_the)*omega[1]*del_t+c_phi/(c_the*c_the)*omega[2]*del_t,0],
-                [0,0,0,0,0,0, -s_phi*omega[1]*del_t-c_phi*omega[2]*del_t,1,0],
-                [0,0,0,0,0,0, c_phi/c_the*omega[1]*del_t-s_phi/c_the*omega[2]*del_t, s_phi*t_the/c_the*omega[1]*del_t+c_phi*t_the/c_the*omega[2]*del_t,0]
+                [0,0,0,0,0,1, c_the*c_phi*acc[1]*del_t - c_the*s_phi*acc[2]*del_t,
+                                -c_the*acc[0]*del_t - s_the*s_phi*acc[1] - s_the*c_phi*acc[2]*del_t,
+                                0],
+                [0,0,0,0,0,0, 1+c_phi*t_the*omega[1]*del_t-s_phi*t_the*omega[2]*del_t, 
+                                s_phi/(c_the*c_the)*omega[1]*del_t+c_phi/(c_the*c_the)*omega[2]*del_t,
+                                0],
+                [0,0,0,0,0,0, -s_phi*omega[1]*del_t-c_phi*omega[2]*del_t,
+                                1,
+                                0],
+                [0,0,0,0,0,0, c_phi/c_the*omega[1]*del_t-s_phi/c_the*omega[2]*del_t,
+                                s_phi*t_the/c_the*omega[1]*del_t+c_phi*t_the/c_the*omega[2]*del_t,
+                                0]
                 ],dtype=np.float)
 
     s_phi_pre = np.sin(x_pre[6])
@@ -311,7 +322,7 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
     s_the_pre = np.sin(x_pre[7])
     c_the_pre = np.cos(x_pre[7])
 
-    AA1 = np.sqrt(pow(x_pre[:,0][0]-anchor1[0] ,2) + pow(x_pre[:,0][1]-anchor1[1] ,2) + pow(x_pre[:,0][2]-anchor1[2] ,2))
+    AA1 = np.sqrt(pow(x_pre[:,0][0]-anchor1[0] ,2) + pow(x_pre[:,0][1]-anchor1[1] ,2) + pow(x_pre[:,0][2]-anchor1[2] ,2))##√(x-x1)^2+(y-y1)^2+(z-z1)^2
     AA2 = np.sqrt(pow(x_pre[:,0][0]-anchor2[0] ,2) + pow(x_pre[:,0][1]-anchor2[1] ,2) + pow(x_pre[:,0][2]-anchor2[2] ,2))
     AA3 = np.sqrt(pow(x_pre[:,0][0]-anchor3[0] ,2) + pow(x_pre[:,0][1]-anchor3[1] ,2) + pow(x_pre[:,0][2]-anchor3[2] ,2))
     AA4 = np.sqrt(pow(x_pre[:,0][0]-anchor4[0] ,2) + pow(x_pre[:,0][1]-anchor4[1] ,2) + pow(x_pre[:,0][2]-anchor4[2] ,2))
@@ -335,17 +346,18 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
     G1 = la.inv(CC.dot(P_pre.dot(CC.T)) + RR)
     GG = P_pre.dot((CC.T).dot(G1))
 #########################################################################################
-    h_pre = np.array([[s_the_pre*g],
-                    [-c_the_pre*s_phi_pre*g],
-                    [-c_the_pre*c_phi_pre*g],
+##観測行列
+    h_pre = np.array([[s_the_pre*g],            #ax
+                    [-c_the_pre*s_phi_pre*g],   #ax
+                    [-c_the_pre*c_phi_pre*g],   #ax
                     [np.sqrt(pow(x_pre[:,0][0]-anchor1[0] ,2) + pow(x_pre[:,0][1]-anchor1[1] ,2) + pow(x_pre[:,0][2]-anchor1[2] ,2))],
                     [np.sqrt(pow(x_pre[:,0][0]-anchor2[0] ,2) + pow(x_pre[:,0][1]-anchor2[1] ,2) + pow(x_pre[:,0][2]-anchor2[2] ,2))],
                     [np.sqrt(pow(x_pre[:,0][0]-anchor3[0] ,2) + pow(x_pre[:,0][1]-anchor3[1] ,2) + pow(x_pre[:,0][2]-anchor3[2] ,2))],
                     [np.sqrt(pow(x_pre[:,0][0]-anchor4[0] ,2) + pow(x_pre[:,0][1]-anchor4[1] ,2) + pow(x_pre[:,0][2]-anchor4[2] ,2))],
-                    [x_pre[:,0][2]],
-                    [x_pre[:,0][8]],     #yaw
-                    [x_pre[:,0][3]],     #v_x
-                    [x_pre[:,0][4]]      #v_y
+                    [x_pre[:,0][2]],            #height
+                    [x_pre[:,0][8]],            #yaw
+                    [x_pre[:,0][3]],            #v_x
+                    [x_pre[:,0][4]]             #v_y
                     ], dtype=np.float)
 
     m9a, m9g, m9m = imu.getMotion9() #measure
@@ -358,11 +370,11 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
     m9a_low_old = m9a_low
     m9g_low_old = m9g_low
 
-    acc = np.array([-m9a_low[0],-m9a_low[1],-m9a_low[2]])
+    acc = np.array([-m9a_low[0],-m9a_low[1],-m9a_low[2]])##加速度センサ
 
     #results[5] = adc.read(5) #measure
 
-    omega = np.array([(m9g[0]-bias_gyro_x),(m9g[1]-bias_gyro_y),m9g[2]-bias_gyro_z])
+    omega = np.array([(m9g[0]-bias_gyro_x),(m9g[1]-bias_gyro_y),m9g[2]-bias_gyro_z])##ジャイロセンサ[p,q,r]^T
 
     for i in range(4):
         DD_e[i] = DD[i] 
@@ -389,8 +401,10 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
                 [v_yopt]                               #opt y
                 ],dtype=np.float)
 
+#########################################################################################
     P_new = (I_9-GG.dot(CC)).dot(P_pre)
     x_new = x_pre + GG.dot(yy-h_pre)
+#########################################################################################
 
     ##estimated Positions
     pos_x = x_new[:,0][0] - bias_x
@@ -433,6 +447,7 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
             DD_old[i] = DD_e[i]
 
     return pos_x, pos_y, pos_z, x_new[:,0][3], x_new[:,0][4], x_new[:,0][5], x_new[:,0][6], x_new[:,0][7], x_new[:,0][8]
+    ##estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estimate_vz, estimate_Pitch, estimate_Roll, estimate_Yaw
 
 
 def control(estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estimate_vz, estimate_Pitch, estimate_Roll, estimate_Yaw):
@@ -471,7 +486,7 @@ def control(estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estima
     #     mode_pos = -1
 
      
-    ##PIDcontroller
+    ##PIDcontroller##~.updateはメソッドDronepilotから呼び出している
     pPIDvalue = pitchPID.update(desiredPos["x"] - currentPos["x"]) #- 0.5 * estimate_vx  
     rPIDvalue = rollPID.update(desiredPos["y"] - currentPos["y"])  #- 0.5 * estimate_vy
     hPIDvalue = heightPID.update(desiredPos["z"] - currentPos["z"])
@@ -526,12 +541,12 @@ if __name__ == '__main__':
     startup()
     IMU()
     yaw_calibration()
-    bias_pos = pos_cal()
+    bias_pos = pos_cal()  ##返り値bias_posに代入  bias_x, bias_y, bias_z
     time.sleep(1)
 
     while True:
         try:
-            estimate = pos_estimate(bias_pos[0], bias_pos[1], bias_pos[2])
+            estimate = pos_estimate(bias_pos[0], bias_pos[1], bias_pos[2]) ## 返り値をestimateに代入 pos_x, pos_y, pos_z, x_new[:,0][3], x_new[:,0][4], x_new[:,0][5], x_new[:,0][6], x_new[:,0][7], x_new[:,0][8]
             control(estimate[0],estimate[1],estimate[2],estimate[3],estimate[4],estimate[5],estimate[6],estimate[7],estimate[8])
 
         except Exception, error:
