@@ -115,7 +115,7 @@ def uart():
             deltaX = -float(OPT[1])  * 0.001  #m/s
             deltaY = float(OPT[2])  * 0.001  #m/s
             # v_xopt = -float(OPT[1])  * 0.001  #change
-            # v_yopt= float(OPT[2])  * 0.001  #change           
+            # v_yopt= float(OPT[2])  * 0.001  #change
             deltaX_sum_ar = float(OPT[3])  * 0.001 ##m
             deltaY_sum_ar = float(OPT[4])  * 0.001 ##m
             DD_b[0] = int(OPT[5])
@@ -129,7 +129,7 @@ def uart():
 
             time_lap = time.time() - time_b
             # v_xopt_sum = v_xopt_sum + v_xopt * 0.042  ##m
-            # v_yopt_sum = v_yopt_sum + v_yopt * 0.042  ##m 
+            # v_yopt_sum = v_yopt_sum + v_yopt * 0.042  ##m
             v_xopt_sum = v_xopt_sum + deltaX * 0.042  # #change
             v_yopt_sum = v_yopt_sum + deltaY * 0.042   #change
             time_b = time.time()

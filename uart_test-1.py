@@ -14,7 +14,7 @@ def uart():
     while 1:
         data = ser.readline()
         OPT = data.split(",")
-        OPT[8] = OPT[8].strip('\r\n')#kaigyou
+        OPT[8] = OPT[8].strip('\r\n')
         height  = int(OPT[0]) * 0.001 #m
         deltaX = -float(OPT[2])  * 0.001  #m/s
         deltaY = -float(OPT[1])  * 0.001  #m/s

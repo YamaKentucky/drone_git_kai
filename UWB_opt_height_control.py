@@ -74,8 +74,11 @@ desiredYaw = 1500
 ## Controller PID's gains (Gains are considered the same for pitch and roll)
 ##p_gains = {'kp': 1.85, 'ki':0.181, 'kd':2.0, 'iMax':2, 'filter_bandwidth':50} ##Position Controller gains
 ##r_gains = {'kp': 1.85, 'ki':0.181, 'kd':2.0, 'iMax':2, 'filter_bandwidth':50} ## Position Controller gains
-p_gains = {'kp': 1.70, 'ki':0.181, 'kd':2.0, 'iMax':2, 'filter_bandwidth':50} ## Change
-r_gains = {'kp': 1.70, 'ki':0.181, 'kd':2.0, 'iMax':2, 'filter_bandwidth':50} ## Change
+##h_gains = {'kp': 0.8,  'ki':0.37,  'kd':1.6, 'iMax':2, 'filter_bandwidth':50} ## Height Controller gains
+##y_gains = {'kp': 1.0,  'ki':0.0,   'kd':0.0, 'iMax':2, 'filter_bandwidth':50} ## Yaw Controller gains
+## Controller PID's gains (Gains are considered the same for pitch and roll)
+p_gains = {'kp': 1.85, 'ki':0.17,  'kd':2.0, 'iMax':2, 'filter_bandwidth':50} ##Position Controller gains
+r_gains = {'kp': 1.85, 'ki':0.17,  'kd':2.0, 'iMax':2, 'filter_bandwidth':50} ## Position Controller gains
 h_gains = {'kp': 0.8,  'ki':0.37,  'kd':1.6, 'iMax':2, 'filter_bandwidth':50} ## Height Controller gains
 y_gains = {'kp': 1.0,  'ki':0.0,   'kd':0.0, 'iMax':2, 'filter_bandwidth':50} ## Yaw Controller gains
 
@@ -117,7 +120,7 @@ def uart():
             deltaX = -float(OPT[1])  * 0.001  #m/s
             deltaY = float(OPT[2])  * 0.001  #m/s
             # v_xopt = -float(OPT[1])  * 0.001  #change
-            # v_yopt= float(OPT[2])  * 0.001  #change           
+            # v_yopt= float(OPT[2])  * 0.001  #change
             deltaX_sum_ar = float(OPT[3])  * 0.001 ##m
             deltaY_sum_ar = float(OPT[4])  * 0.001 ##m
             DD_b[0] = int(OPT[5])
@@ -131,7 +134,7 @@ def uart():
 
             time_lap = time.time() - time_b
             # v_xopt_sum = v_xopt_sum + v_xopt * 0.042  ##m
-            # v_yopt_sum = v_yopt_sum + v_yopt * 0.042  ##m 
+            # v_yopt_sum = v_yopt_sum + v_yopt * 0.042  ##m
             v_xopt_sum = v_xopt_sum + deltaX * 0.042  # #change
             v_yopt_sum = v_yopt_sum + deltaY * 0.042   #change
             time_b = time.time()
@@ -253,7 +256,7 @@ def log():
     if logging:
         print ("Logging mode")
         st = datetime.datetime.fromtimestamp(time.time()).strftime('%m_%d_%H-%M-%S')+".csv"
-        f = open("./logs/position_opt/Logs_opt_3point"+st, "w")
+        f = open("./logs/position_opt/Logs_opt_height"+st, "w")
         logger = csv.writer(f)
         logger.writerow(("timestamp", "x", "y", "z", "v_xopt", "v_yopt","v_xopt_sum", "v_yopt_sum", "v_x", "v_y" 
                             , "DD[0]", "DD[1]", "DD[2]", "DD[3]"
@@ -459,18 +462,18 @@ def control(estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estima
     heading = f_yaw.update(estimate_Yaw)
 
 
-    #change desired pos
-    if 1400 < vehicle.channels['7'] < 1600:
-        desiredPos = {'x':0.0, 'y':0.0, 'z':1.0}
-        mode_pos = 0
+    # #change desired pos
+    # if 1400 < vehicle.channels['7'] < 1600:
+    #     desiredPos = {'x':0.0, 'y':0.0, 'z':1.0}
+    #     mode_pos = 0
 
-    if vehicle.channels['7'] > 1800:
-        desiredPos = {'x':1.5, 'y':-1.0, 'z':1.0}
-        mode_pos = 1
+    # if vehicle.channels['7'] > 1800:
+    #     desiredPos = {'x':1.5, 'y':-1.0, 'z':1.0}
+    #     mode_pos = 1
 
-    if vehicle.channels['7'] < 1300:
-        desiredPos = {'x':-1.5, 'y':1.0, 'z':1.0}
-        mode_pos = -1
+    # if vehicle.channels['7'] < 1300:
+    #     desiredPos = {'x':-1.5, 'y':1.0, 'z':1.0}
+    #     mode_pos = -1
 
      
     ##PIDcontroller
@@ -499,8 +502,8 @@ def control(estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estima
         rcCMD[2] = limit(desiredThrottle, 1104, 1924)
         rcCMD[3] = limit(desiredYaw,1104,1924)
         #rcCMD[3] = 1500
-        vehicle.channels.overrides = { "2" : rcCMD[0] ,"1" : rcCMD[3] ,"4" : rcCMD[1] } #Yaw:1500
-        #vehicle.channels.overrides = {"3":rcCMD[2] ,"1" : rcCMD[3] } #Yaw:1500 heightControll
+        vehicle.channels.overrides = { "2" : rcCMD[0] ,"1" : rcCMD[3] ,"4" : rcCMD[1] ,"3":rcCMD[2]} #heightControllYaw:1500
+        #vehicle.channels.overrides = {"3":rcCMD[2] ,"1" : rcCMD[3] } #Yaw:1500 
         mode = 1
 
     else:

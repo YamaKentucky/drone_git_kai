@@ -1,25 +1,23 @@
-# -*- coding: utf-8 -*-
 
-
-import csv
-import datetime
-import sys
-import threading
 ##modules for UWB(serial) opt(serial)
 import time
+import datetime, csv
+import threading, serial
 
-import navio.adc
-import navio.mpu9250
-import navio.util
 ##modules for positoon estimate
 import numpy as np
-import serial
-import spidev
-##modules for dronekit
-from dronekit import VehicleMode, connect
-from DronePilot.modules.pixVehicle import *
-from DronePilot.modules.utils import *
 from numpy import linalg as la
+import spidev
+import sys
+import navio.util
+import navio.mpu9250
+import navio.adc
+import navio.util
+
+##modules for dronekit
+from dronekit import connect, VehicleMode
+from DronePilot.modules.utils import *
+from DronePilot.modules.pixVehicle import *
 
 ##for opt serial
 ser = serial.Serial("/dev/ttyAMA0" , 115200)
@@ -135,7 +133,7 @@ def uart():
             # deltaY_sum = deltaY_sum + deltaY * time_lap  ##m
             time_b = time.time()
             #time.sleep(0.042)                         ##delay
-            
+
         except KeyboardInterrupt:
             print "Stop uart by KeyboardInterrupt!!"
             break

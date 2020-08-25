@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 ##modules for UWB(serial) opt(serial)
 import time
 import datetime, csv
@@ -36,7 +33,8 @@ I_9 = np.identity(9)
 acc_noise=0.001
 gyro_noise=0.0003468268
 QQ = np.diag([0,0,0,acc_noise,acc_noise,acc_noise,gyro_noise,gyro_noise,gyro_noise])
-RR = np.diag([0.4,0.4,0.4,0.0001,0.0001,0.0001,0.0001,0.0001,0.08,0.0006,0.0006]) #add yaw_pix noise, opt noise
+RR = np.diag([0.4,0.4,0.4,0.0001,0.0001,0.0001,0.0001,0.0001,0.08]) #add yaw_pix noise, opt noise
+##RR = np.diag([0.4,0.4,0.4,0.0001,0.0001,0.0001,0.0001,0.0001,0.08,0.0006,0.0006]) #add yaw_pix noise, opt noise
 count = 0
 
 alfa = np.array([0.8244,0.8244,0.8244],dtype=np.float)
@@ -47,7 +45,7 @@ m9g_low_old = np.array([0, 0, 0], dtype = np.float)
 # anchor2 = np.array([ 3.5,  2.0, 1.820],dtype=float)
 # anchor3 = np.array([ 3.5, -2.0, 1.820],dtype=float)
 # anchor4 = np.array([-3.5, -2.0, 1.820],dtype=float)
-##アンカーの絶対座標入力
+
 anchor1 = np.array([-3,   2.5, 1.242],dtype=float)
 anchor2 = np.array([ 3,   2.5, 1.242],dtype=float)
 anchor3 = np.array([ 3,  -2.5, 1.242],dtype=float)
@@ -67,7 +65,7 @@ ky = 500 / pi # Yaw controller gain
 desiredPos = {'x':0.0, 'y':0.0, 'z':1.0} ## Set at the beginning (for now...)
 currentPos = {'x':0.0, 'y':0.0, 'z':0.0} ## It will be updated using Estimater
 
-## Initialize RC commands and pitch/roll to be sent to the Pixracer
+## Initialize RC commands and pitch/roll to be sent to the Pixracer 
 rcCMD = [1500,1500,1000,1500]
 desiredRoll = 1500
 desiredPitch = 1500
@@ -75,8 +73,7 @@ desiredThrottle = 1000
 desiredYaw = 1500
 
 ## Controller PID's gains (Gains are considered the same for pitch and roll)
-## 主にピッチとロールのゲインをいじれば位置制御の応答性が変わる．##高さゲインの調整は慎重にする
-p_gains = {'kp': 1.85, 'ki':0.181, 'kd':2.0, 'iMax':2, 'filter_bandwidth':50} ## Position Controller gains
+p_gains = {'kp': 1.85, 'ki':0.181, 'kd':2.0, 'iMax':2, 'filter_bandwidth':50} ##Position Controller gains
 r_gains = {'kp': 1.85, 'ki':0.181, 'kd':2.0, 'iMax':2, 'filter_bandwidth':50} ## Position Controller gains
 h_gains = {'kp': 0.8,  'ki':0.37,  'kd':1.6, 'iMax':2, 'filter_bandwidth':50} ## Height Controller gains
 y_gains = {'kp': 1.0,  'ki':0.0,   'kd':0.0, 'iMax':2, 'filter_bandwidth':50} ## Yaw Controller gains
@@ -100,7 +97,6 @@ f_roll  = low_pass(40,loop_time)
 mode = 0
 mode_pos = 0
 
-##TeensyLCからUart通信にて送られてきたデータをそれぞれ変数に格納する
 def uart():
     global DD, OPT, height, deltaX, deltaY, v_xopt_sum, v_yopt_sum, time_lap, deltaX_sum_ar, deltaY_sum_ar
 
@@ -132,14 +128,14 @@ def uart():
 
             time_lap = time.time() - time_b
             v_xopt_sum = v_xopt_sum + v_xopt * 0.042  ##m
-            v_yopt_sum = v_yopt_sum + v_yopt * 0.042  ##m
+            v_yopt_sum = v_yopt_sum + v_yopt * 0.042  ##m 
             time_b = time.time()
             
         except KeyboardInterrupt:
             print "Stop uart by KeyboardInterrupt!!"
             break
 
-##DD_oldの初期化やスレッド化したuart()関数を動かすなどする．
+
 def startup():
     global DD_e, DD_old, DD_abs, dd
     DD_e = [0, 0, 0, 0]
@@ -149,7 +145,7 @@ def startup():
     th1.start()
     time.sleep(2)
 
-    DD_old = [i for i in DD if i > 0]
+    DD_old = [i for  i in DD if i > 0]
     while True:
         if  all([i > 0 for i in DD_old]) > 0:
             print "All DD_old > 0 "
@@ -164,7 +160,7 @@ def startup():
     log()
     time.sleep(2)
 
-##ジャイロセンサのキャリブレーションをする．
+
 def IMU():
     global g, bias_gyro_x, bias_gyro_y, bias_gyro_z, imu, kt
     g = bias_gyro_x = bias_gyro_y = bias_gyro_z = 0
@@ -192,7 +188,7 @@ def IMU():
         gyro_y = gyro_y + m9g[1]
         gyro_z = gyro_z + m9g[2]
 
-        g = g + np.sqrt(pow(m9a[0], 2) + pow(m9a[1], 2) + pow(m9a[2], 2))##g+√(x^2+y^2+z^2)
+        g = g + np.sqrt(pow(m9a[0], 2) + pow(m9a[1], 2) + pow(m9a[2], 2))
         time.sleep(0.03)
 
     bias_gyro_x = gyro_x / 100
@@ -205,19 +201,17 @@ def IMU():
     print ("g: {:5.3f}, bias_gyro_x: {:5.3f}, bias_gyro_y: {:5.3f}, bias_gyro_z: {:5.3f}".format(g, bias_gyro_x, bias_gyro_y, bias_gyro_z))
     time.sleep(1)
 
-##ヨー角の初期化を行う．初めにクアッドロータを置いた向きを0度として扱う
 def yaw_calibration():
     global bias_yaw
     bias_yaw = yaw_cal = 0
 
     for i in range(100):
         yaw_cal = yaw_cal + vehicle.attitude.yaw
-
+    
     bias_yaw = yaw_cal / 100
     print "yaw_cal: {:3.3f}".format(bias_yaw)
     time.sleep(1)
 
-##推定されたヨー角の補正を行う
 def yaw_filter(yaw):
     yaw_true = - yaw + bias_yaw
 
@@ -225,11 +219,10 @@ def yaw_filter(yaw):
         yaw_sign = yaw_true - 2 * np.pi
 
     else:
-        yaw_sign = yaw_true
+        yaw_sign = yaw_true 
 
     return yaw_sign
 
-##位置の初期化を行う．初めにクアッドロータを置いた地点を位置(x, y)=(0, 0)として扱う．
 def pos_cal():
     bias_x = bias_gyro_y = bias_gyro_z = 0
     pos_x = pos_y = pos_z = 0
@@ -257,7 +250,7 @@ def log():
         st = datetime.datetime.fromtimestamp(time.time()).strftime('%m_%d_%H-%M-%S')+".csv"
         f = open("./logs/position_opt/Logs_opt_test"+st, "w")
         logger = csv.writer(f)
-        logger.writerow(("timestamp", "x", "y", "z", "v_xopt", "v_yopt","v_xopt_sum", "v_yopt_sum", "v_x", "v_y"
+        logger.writerow(("timestamp", "x", "y", "z", "v_xopt", "v_yopt","v_xopt_sum", "v_yopt_sum", "v_x", "v_y" 
                             , "DD[0]", "DD[1]", "DD[2]", "DD[3]"
                             , "dd1", "dd2", "dd3", "dd4"
                             , "Pitch", "Roll", "Yaw", "Yaw_pix", "heading_pix", "Height"
@@ -268,8 +261,6 @@ def log():
 
 
 def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
-##期化した初期位置を引数にクアッドロータの位置の推定を行う．
-##カルマンフィルタを用いて推定しており，そこそこ複雑なので，詳細は私の修論や赤堀さんの修論を参考に．
     global x_old, acc, omega, P_old, m9a_low_old, m9g_low_old, x_new, v_xopt, v_yopt
     global count
 
@@ -330,9 +321,9 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
                 [(x_pre[:,0][0]-anchor3[0])/AA3, (x_pre[:,0][1]-anchor3[1])/AA3, (x_pre[:,0][2]-anchor3[2])/AA3, 0,0,0,0,0,0],
                 [(x_pre[:,0][0]-anchor4[0])/AA4, (x_pre[:,0][1]-anchor4[1])/AA4, (x_pre[:,0][2]-anchor4[2])/AA4, 0,0,0,0,0,0],
                 [0,0,1,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,1],   #yaw jakob
-                [0,0,0,1,0,0,0,0,0],   #v_x jakob
-                [0,0,0,0,1,0,0,0,0]    #v_y jakob
+                [0,0,0,0,0,0,0,0,1]##,   #yaw jakob
+                ##[0,0,0,1,0,0,0,0,0],   #v_x jakob 
+                ##[0,0,0,0,1,0,0,0,0]    #v_y jakob
                 ],dtype=np.float)
 
 #########################################################################################
@@ -349,9 +340,9 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
                     [np.sqrt(pow(x_pre[:,0][0]-anchor3[0] ,2) + pow(x_pre[:,0][1]-anchor3[1] ,2) + pow(x_pre[:,0][2]-anchor3[2] ,2))],
                     [np.sqrt(pow(x_pre[:,0][0]-anchor4[0] ,2) + pow(x_pre[:,0][1]-anchor4[1] ,2) + pow(x_pre[:,0][2]-anchor4[2] ,2))],
                     [x_pre[:,0][2]],
-                    [x_pre[:,0][8]],     #yaw
-                    [x_pre[:,0][3]],     #v_x
-                    [x_pre[:,0][4]]      #v_y
+                    [x_pre[:,0][8]]##,     #yaw
+                    ##[x_pre[:,0][3]],     #v_x
+                   ## [x_pre[:,0][4]]      #v_y
                     ], dtype=np.float)
 
     m9a, m9g, m9m = imu.getMotion9() #measure
@@ -371,7 +362,7 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
     omega = np.array([(m9g[0]-bias_gyro_x),(m9g[1]-bias_gyro_y),m9g[2]-bias_gyro_z])
 
     for i in range(4):
-        DD_e[i] = DD[i]
+        DD_e[i] = DD[i] 
         DD_abs[i] = abs(DD_e[i] - DD_old[i])
 
         if DD_abs[i] < 80:
@@ -390,9 +381,9 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
                 [dd[2]],
                 [dd[3]],
                 [height],
-                [yaw_filter(vehicle.attitude.yaw)],    #yaw_pix
-                [v_xopt],                              #opt x
-                [v_yopt]                               #opt y
+                [yaw_filter(vehicle.attitude.yaw)]##,    #yaw_pix
+                ##[v_xopt],                              #opt x
+                ##[v_yopt]                               #opt y
                 ],dtype=np.float)
 
     P_new = (I_9-GG.dot(CC)).dot(P_pre)
@@ -402,7 +393,7 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
     pos_x = x_new[:,0][0] - bias_x
     pos_y = x_new[:,0][1] - bias_y
     pos_z = x_new[:,0][2] - bias_z
-
+    
     if count % 10 == 0:
         print "pos_x:{:+7.3f}, pos_y:{:+7.3f}, pos_z:{:+7.3f}".format(pos_x, pos_y, pos_z)
         print "Height:{:+5.3f}, deltaX:{:+5.3f}, deltaY:{:+5.3f}, DD[0]:{:5.0f}, DD[1]:{:5.0f}, DD[2]:{:5.0f}, DD[3]:{:5.0f}" .format(height, deltaX, deltaY, DD[0], DD[1], DD[2], DD[3])
@@ -421,7 +412,7 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
             ,mode, mode_pos
             ,rcCMD[0], rcCMD[1], rcCMD[2], rcCMD[3]
             )
-
+    
     if logging:
         if logging_e:
             logger.writerow(row)
@@ -456,18 +447,13 @@ def control(estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estima
     elapsed = 0
 
     #current position
-    currentPos["x"] = estimate_x
-    currentPos["y"] = estimate_y
-    currentPos["z"] = estimate_z
-
+    currentPos["x"] = estimate_x 
+    currentPos["y"] = estimate_y 
+    currentPos["z"] = estimate_z 
+    
     heading = f_yaw.update(estimate_Yaw)
 
 
-
-    ##点を移動する位置制御がしたい場合は，456行目からのコメントを外すことで，それが可能である．
-    ##チャンネル"7"を三段階に切り替えることで，位置の目標値が変わる仕組みである．
-    ##プロポの設定はチャンネル"7"が三段スイッチに振られているためこれが可能である
-    
     # #change desired pos
     # if 1400 < vehicle.channels['7'] < 1600:
     #     desiredPos = {'x':0.0, 'y':0.0, 'z':1.0}
@@ -481,9 +467,9 @@ def control(estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estima
     #     desiredPos = {'x':-1.5, 'y':1.0, 'z':1.0}
     #     mode_pos = -1
 
-
+     
     ##PIDcontroller
-    pPIDvalue = pitchPID.update(desiredPos["x"] - currentPos["x"]) #- 0.5 * estimate_vx
+    pPIDvalue = pitchPID.update(desiredPos["x"] - currentPos["x"]) #- 0.5 * estimate_vx  
     rPIDvalue = rollPID.update(desiredPos["y"] - currentPos["y"])  #- 0.5 * estimate_vy
     hPIDvalue = heightPID.update(desiredPos["z"] - currentPos["z"])
     yPIDvalue = yawPID.update(0.0 - heading)
@@ -494,19 +480,18 @@ def control(estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estima
     ##calcurate,PWM
     desiredPitch = toPWM(degrees( (pPIDvalue * cosYaw - rPIDvalue * sinYaw) * (1 / g) ), 1)
     desiredRoll  = toPWM(degrees( (rPIDvalue * cosYaw + pPIDvalue * sinYaw) * (1 / g) ), 1)
-
+    
     desiredThrottle = ((hPIDvalue + g) * vehicle_weight) / (cos(f_pitch.update(estimate_Pitch))*cos(f_roll.update(estimate_Roll)))
     desiredThrottle = (desiredThrottle / kt) + u0
 
     desiredYaw = 1500 - (yPIDvalue * ky)
 
-    ##プロポのチャンネル"5"のPPWM幅が"1000"以上の場合，ピッチロールなどの各チャンネルをオーバーライドし，自動制御モードに入る．
-    ##"1000"以下の場合はオーバーライドをクリアし，手動制御を受け付けるようになる．
+    
     if vehicle.channels['5'] > 1000:
-        ##Limit comands safety
-        rcCMD[0] = mapping(limit(desiredPitch, 1104, 1924), 1104.0, 1924.0, 1924.0, 1104.0)
-        rcCMD[1] = mapping(limit(desiredRoll,  1104, 1924), 1104.0, 1924.0, 1924.0, 1104.0)
-        rcCMD[2] = limit(desiredThrottle, 1104, 1924)
+        ##Limit comands safety  
+        rcCMD[0] = mapping(limit(desiredPitch, 1104, 1924), 1104.0, 1924.0, 1924.0, 1104.0)  
+        rcCMD[1] = mapping(limit(desiredRoll,  1104, 1924), 1104.0, 1924.0, 1924.0, 1104.0) 
+        rcCMD[2] = limit(desiredThrottle, 1104, 1924) 
         rcCMD[3] = limit(desiredYaw,1104,1924)
         #rcCMD[3] = 1500
         vehicle.channels.overrides = { "2" : rcCMD[0] ,"1" : rcCMD[3] ,"4" : rcCMD[1] } #Yaw:1500
@@ -522,7 +507,7 @@ def control(estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estima
         yawPID.resetIntegrator()
         mode = 0
 
-
+    
 
     ##print
     if count % 10 == 0:
@@ -557,3 +542,6 @@ if __name__ == '__main__':
             vehicle.close()
             break
             exit()
+
+
+    
