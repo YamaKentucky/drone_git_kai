@@ -73,6 +73,7 @@ desiredThrottle = 1000
 desiredYaw = 1500
 
 ## Controller PID's gains (Gains are considered the same for pitch and roll)
+
 p_gains = {'kp': 1.85, 'ki':0.181, 'kd':2.0, 'iMax':2, 'filter_bandwidth':50} ##Position Controller gains
 r_gains = {'kp': 1.85, 'ki':0.181, 'kd':2.0, 'iMax':2, 'filter_bandwidth':50} ## Position Controller gains
 h_gains = {'kp': 0.8,  'ki':0.37,  'kd':1.6, 'iMax':2, 'filter_bandwidth':50} ## Height Controller gains
@@ -96,6 +97,7 @@ f_roll  = low_pass(40,loop_time)
 ## mode of position control
 mode = 0
 mode_pos = 0
+
 
 def uart():
     global DD, OPT, height, deltaX, deltaY, deltaX_sum, deltaY_sum, time_lap, deltaX_sum_ar, deltaY_sum_ar
@@ -135,7 +137,7 @@ def uart():
             #time.sleep(0.042)                         ##delay
 
         except KeyboardInterrupt:
-            print "Stop uart by KeyboardInterrupt!!"
+            print ("Stop uart by KeyboardInterrupt!!")
             break
 
 
@@ -151,14 +153,14 @@ def startup():
     DD_old = [i for  i in DD if i > 0]
     while True:
         if  all([i > 0 for i in DD_old]) > 0:
-            print "All DD_old > 0 "
+            print ("All DD_old > 0 ")
             break
         else:
-            print "Waiting for UWB"
+            print ("Waiting for UWB")
             DD_old = [i for  i in DD]
             time.sleep(0.5)
 
-    print  "DD_old[0]: {:5.0f}, DD_old[1]: {:5.0f}, DD_old[2]: {:5.0f}, DD_old[3]: {:5.0f}".format(DD_old[0], DD_old[1], DD_old[2], DD_old[3])
+    print  ("DD_old[0]: {:5.0f}, DD_old[1]: {:5.0f}, DD_old[2]: {:5.0f}, DD_old[3]: {:5.0f}".format(DD_old[0], DD_old[1], DD_old[2], DD_old[3]))
     print('SYSTEM ALL GREEN')
     log()
     time.sleep(2)
@@ -212,7 +214,7 @@ def yaw_calibration():
         yaw_cal = yaw_cal + vehicle.attitude.yaw
 
     bias_yaw = yaw_cal / 100
-    print "yaw_cal: {:3.3f}".format(bias_yaw)
+    print ("yaw_cal: {:3.3f}".format(bias_yaw))
     time.sleep(1)
 
 def yaw_filter(yaw):
@@ -241,8 +243,8 @@ def pos_cal():
     bias_y = pos_y / 100
     bias_z = pos_z / 100
 
-    print "Position cal finish!!"
-    print "bias_x:{:+7.3f}, bias_y:{:+7.3f}, bias_z:{:+7.3f}". format(bias_x, bias_y, bias_z)
+    print ("Position cal finish!!")
+    print ("bias_x:{:+7.3f}, bias_y:{:+7.3f}, bias_z:{:+7.3f}". format(bias_x, bias_y, bias_z))
     time.sleep(2)
     return bias_x, bias_y, bias_z
 
@@ -398,8 +400,8 @@ def pos_estimate(bias_x = 0, bias_y = 0, bias_z = 0, logging_e = True):
     pos_z = x_new[:,0][2] - bias_z
 
     if count % 10 == 0:
-        print "pos_x:{:+7.3f}, pos_y:{:+7.3f}, pos_z:{:+7.3f}".format(pos_x, pos_y, pos_z)
-        print "Height:{:+5.3f}, deltaX:{:+5.3f}, deltaY:{:+5.3f}, DD[0]:{:5.0f}, DD[1]:{:5.0f}, DD[2]:{:5.0f}, DD[3]:{:5.0f}" .format(height, deltaX, deltaY, DD[0], DD[1], DD[2], DD[3])
+        print ("pos_x:{:+7.3f}, pos_y:{:+7.3f}, pos_z:{:+7.3f}".format(pos_x, pos_y, pos_z))
+        print ("Height:{:+5.3f}, deltaX:{:+5.3f}, deltaY:{:+5.3f}, DD[0]:{:5.0f}, DD[1]:{:5.0f}, DD[2]:{:5.0f}, DD[3]:{:5.0f}" .format(height, deltaX, deltaY, DD[0], DD[1], DD[2], DD[3]))
     count = count + 1
 
     row = ("{:6.3f}".format(time.time()), "{:.3f}".format(pos_x), "{:.3f}".format(pos_y) , "{:.3f}".format(pos_z)
@@ -514,7 +516,7 @@ def control(estimate_x, estimate_y, estimate_z, estimate_vx, estimate_vy, estima
 
     ##print
     if count % 10 == 0:
-        print "Mode: %s| Mode_pos: %s| PitchRC: %d | RollRC: %d | ThrottleRC: %d | YawRC: %d " % (mode, mode_pos, rcCMD[0], rcCMD[1], rcCMD[2], rcCMD[3])
+        print ("Mode: %s| Mode_pos: %s| PitchRC: %d | RollRC: %d | ThrottleRC: %d | YawRC: %d " % (mode, mode_pos, rcCMD[0], rcCMD[1], rcCMD[2], rcCMD[3]))
 
 
     ##wait until update_rate
@@ -535,12 +537,12 @@ if __name__ == '__main__':
             control(estimate[0],estimate[1],estimate[2],estimate[3],estimate[4],estimate[5],estimate[6],estimate[7],estimate[8])
 
         except Exception, error:
-            print "error occur!!"
-            print "Error on main:{}".format(str(error))
+            print ("error occur!!")
+            print ("Error on main:{}".format(str(error)))
             vehicle.close()
 
         except KeyboardInterrupt:
-            print "Keyboard Interrupt!! Close this file!!"
+            print ("Keyboard Interrupt!! Close this file!!")
             f.close()
             vehicle.close()
             break
