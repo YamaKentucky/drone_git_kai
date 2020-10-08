@@ -45,10 +45,10 @@ m9g_low_old = np.array([0, 0, 0], dtype = np.float)
 # anchor3 = np.array([ 3.5, -2.0, 1.820],dtype=float)
 # anchor4 = np.array([-3.5, -2.0, 1.820],dtype=float)
 
-anchor1 = np.array([-3,   2.5, 1.242],dtype=float)
-anchor2 = np.array([ 3,   2.5, 1.242],dtype=float)
-anchor3 = np.array([ 3,  -2.5, 1.242],dtype=float)
-anchor4 = np.array([-3,  -2.5, 1.242],dtype=float)
+anchor1 = np.array([-3,   2.5, 1.242],dtype=float) ##Left front
+anchor2 = np.array([ 3,   2.5, 1.242],dtype=float) ##Left back
+anchor3 = np.array([ 3,  -2.5, 1.242],dtype=float) ##Right back
+anchor4 = np.array([-3,  -2.5, 1.242],dtype=float) ##Right front
 
 ##for logging
 logging = True
@@ -57,7 +57,7 @@ logging = True
 vehicle = connect('/dev/ttyACM0', wait_ready = True, baud = 921600)
 update_rate = 0.005 # 200 hz loop cycle
 loop_time = 0.01666 #loop time
-vehicle_weight = 0.64 # Kg
+vehicle_weight = 1.1 # Kg #New UWB drone
 u0 = 1000 # Zero throttle command
 uh = 1360 # Hover throttle command
 ky = 500 / pi # Yaw controller gain
@@ -65,10 +65,16 @@ desiredPos = {'x':0.0, 'y':0.0, 'z':1.0} ## Set at the beginning (for now...)
 currentPos = {'x':0.0, 'y':0.0, 'z':0.0} ## It will be updated using Estimater
 
 ## Initialize RC commands and pitch/roll to be sent to the Pixracer 
-rcCMD = [1500,1500,1000,1500]
+# rcCMD = [1500,1500,1000,1500]
+# desiredRoll = 1500
+# desiredPitch = 1500
+# desiredThrottle = 1000
+# desiredYaw = 1500
+
+rcCMD = [1500,1500,1500,1500]
 desiredRoll = 1500
 desiredPitch = 1500
-desiredThrottle = 1000
+desiredThrottle = 1500
 desiredYaw = 1500
 
 ## Controller PID's gains (Gains are considered the same for pitch and roll)
@@ -256,7 +262,7 @@ def log():
     if logging:
         print ("Logging mode")
         st = datetime.datetime.fromtimestamp(time.time()).strftime('%m_%d_%H-%M-%S')+".csv"
-        f = open("./logs/position_opt/Logs_opt_height"+st, "w")
+        f = open("./logs/position_opt_height/Logs_opt_height"+st, "w")
         logger = csv.writer(f)
         logger.writerow(("timestamp", "x", "y", "z", "v_xopt", "v_yopt","v_xopt_sum", "v_yopt_sum", "v_x", "v_y" 
                             , "DD[0]", "DD[1]", "DD[2]", "DD[3]"
